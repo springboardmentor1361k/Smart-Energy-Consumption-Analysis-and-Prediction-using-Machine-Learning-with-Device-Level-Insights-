@@ -1,0 +1,22 @@
+# Smart Energy Consumption Analysis - Requirements
+# Install using: pip install -r requirements.txt
+# Or install all in one line: pip install pandas numpy matplotlib seaborn scikit-learn tensorflow jupyter notebook ipykernel
+
+# Data Manipulation
+pandas
+numpy
+
+# Visualization
+matplotlib
+seaborn
+
+# Machine Learning
+scikit-learn
+
+# Deep Learning (LSTM)
+tensorflow
+
+# Jupyter Notebook
+jupyter
+notebook
+ipykernel
