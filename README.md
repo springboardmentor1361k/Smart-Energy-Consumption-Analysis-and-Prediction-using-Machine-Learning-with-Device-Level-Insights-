@@ -63,9 +63,10 @@ This project analyzes the **Individual Household Electric Power Consumption Data
 ```
 📦 INFOSYS-SPRINGBOARD-PROJECT1
 ├── 📓 Smart_Energy_Analysis.ipynb    # Main analysis notebook
-├── 📄 household_power_consumption.txt # Dataset file
+├── 📄 household_power_consumption.txt # Dataset file (download separately)
 ├── 📋 requirements.txt               # Python dependencies
-└── 📖 README.md                      # Project documentation
+├── 📖 README.md                      # Project documentation
+└── 🚫 .gitignore                     # Git ignore rules
 ```
 
 ---
@@ -85,18 +86,31 @@ This project analyzes the **Individual Household Electric Power Consumption Data
    cd INFOSYS-SPRINGBOARD-PROJECT1
    ```
 
-2. **Create a virtual environment (recommended)**
+2. **Download the Dataset**
+   
+   The dataset is too large for GitHub. Download it from the UCI ML Repository:
+   
+   - 📥 **Download Link:** [UCI ML Repository - Household Power Consumption](https://archive.ics.uci.edu/ml/datasets/Individual+household+electric+power+consumption)
+   - Or use direct link: [Download ZIP](https://archive.ics.uci.edu/ml/machine-learning-databases/00235/household_power_consumption.zip)
+   
+   After downloading:
+   ```bash
+   # Extract the zip file and place household_power_consumption.txt in the project root
+   unzip household_power_consumption.zip
+   ```
+
+3. **Create a virtual environment (recommended)**
    ```bash
    python -m venv venv
    source venv/bin/activate  # On Windows: venv\Scripts\activate
    ```
 
-3. **Install dependencies**
+4. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Launch Jupyter Notebook**
+5. **Launch Jupyter Notebook**
    ```bash
    jupyter notebook Smart_Energy_Analysis.ipynb
    ```
