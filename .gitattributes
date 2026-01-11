@@ -2,4 +2,5 @@ data/individual+household+electric+power+consumption/household_power_consumption
 *.keras filter=lfs diff=lfs merge=lfs -text
 energy_data/*.txt filter=lfs diff=lfs merge=lfs -text
 notebooks/energy_data/household_power_consumption.txt filter=lfs diff=lfs merge=lfs -text
+*.zip filter=lfs diff=lfs merge=lfs -text
 *.txt filter=lfs diff=lfs merge=lfs -text
