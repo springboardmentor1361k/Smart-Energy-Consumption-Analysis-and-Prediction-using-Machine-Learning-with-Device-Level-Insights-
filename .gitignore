@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+tf-gpu-env/
+venv/
+.ipynb_checkpoints/
+data/*.txt
+data/*.csv
+*.h5
+*.keras
+*.ckpt
+logs/
