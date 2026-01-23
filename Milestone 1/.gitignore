@@ -1,7 +1,4 @@
 # Ignore Jupyter checkpoints
 .ipynb_checkpoints/
-# Ignore images outputs
+# Ignore images outputs (if images/ is still used for outputs)
 images/
-# Ignore large dataset files
-household_power_consumption.txt
-*.zip

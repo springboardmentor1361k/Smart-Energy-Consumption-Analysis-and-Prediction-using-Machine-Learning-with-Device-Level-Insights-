@@ -66,5 +66,6 @@ venv.bak/
 Thumbs.db
 
 # Large data files (download separately - see README)
-household_power_consumption.txt
+Dataset/
 *.zip
+Docs/
