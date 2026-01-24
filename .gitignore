@@ -68,5 +68,4 @@ Thumbs.db
 # Large data files (download separately - see README)
 Dataset/
 *.zip
-Docs/
 Milestone 1/household_power_consumption.txt
