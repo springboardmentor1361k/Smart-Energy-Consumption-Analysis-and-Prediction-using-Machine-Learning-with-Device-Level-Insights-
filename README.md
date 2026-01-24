@@ -35,32 +35,37 @@ This project aims to analyze and forecast household energy consumption using Mac
 
 ---
 
-## � Key Results & Insights
+## 📊 Key Results & Insights
 
 ### Milestone 1: Data Understanding & EDA
-We successfully processed 2,075,259 raw records, imputing 1.25% missing values and treating outliers.
+We successfully processed 2,075,259 raw records, imputing missing values and treating outliers with Winsorization (clipping at 1st and 99th percentiles).
 
 | Missing Values Analysis | Device-Level Distribution |
 | :---: | :---: |
 | ![Missing Values](Milestone%201/images/01_missing_values_analysis.png) | ![Device Distribution](Milestone%201/images/02_device_level_distribution.png) |
 
 **Highlights:**
-*   **Correlation:** Strong linear relationship between Active Power and Intensity.
-*   **Seasonality:** Clear evening peaks identified in consumption patterns.
+*   **Correlation:** Verified strong relationship between consumption and intensity.
+*   **Scaling:** Analyzed MinMax vs Standard Scaling; Standard Scaling adopted for normalization to ensure optimal model performance.
 *   **Heatmap:**
     ![Correlation Heatmap](Milestone%201/images/06_correlation_heatmap.png)
 
-### Milestone 2: Baseline Modeling
-Introduced lag features (1h, 24h) and temporal features (Hour, DayOfWeek, Month).
+### Milestone 2: Feature Engineering & Baseline Model
+We enhanced the dataset with temporal features (`IsWeekend`), Lag features, and device-level aggregations to capture hourly usage patterns.
 
-**Baseline Model Results (Linear Regression):**
-*   **RMSE:** 0.2831
-*   **MAE:** 0.2104
-*   **R² Score:** 0.9328
+**Device Group Aggregation:**
+![Device Aggregation](Milestone%202/images/09_device_hourly_avg.png)
+
+**Baseline Model Performance (Linear Regression):**
+- **Actual vs Predicted Plot:**
+    ![Actual vs Predicted](Milestone%202/images/10_actual_vs_predicted.png)
+- **RMSE**: ~0.5066
+- **MAE**: ~0.3604
+- **R² Score**: ~0.5017
 
 ---
 
-## � Future Scope
+##  Future Scope
 *   **Milestone 3:** Advanced Time Series forecasting using LSTM and Random Forest Regressor.
 *   **Final Phase:** Integration into a unified prediction dashboard.
 
