@@ -69,8 +69,3 @@ Thumbs.db
 Dataset/
 *.zip
 Milestone 1/household_power_consumption.txt
-Milestone 1/data_processed/
-!Milestone 1/images/
-!Milestone 1/reports/
-!Milestone 2/*.png
-!Milestone 1/data_processed/.gitkeep
