@@ -58,12 +58,12 @@ Milestone 2/
 ### 3. Device Hourly Aggregation
 > **Insight:** Climate control dominates energy usage across hours.
 
-![Device Aggregation](images/09_device_hourly_avg.png)
+![Device Aggregation](week3_feature_engineering.png)
 
 ### 4. Model Performance: Actual vs Predicted
 > **Insight:** Baseline model captures general trends but has room for improvement.
 
-![Actual vs Predicted](images/10_actual_vs_predicted.png)
+![Actual vs Predicted](week4_baseline_model_results.png)
 
 ### 5. Baseline Model Results Summary
 - **RMSE**: 0.5066

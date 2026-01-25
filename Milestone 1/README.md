@@ -61,22 +61,37 @@ Milestone 1/
 ### 1. Consumption Patterns
 > **Insight:** Peak consumption occurs during **morning (7-9 AM)** and **evening (6-9 PM)**. Weekend consumption significantly differs from weekdays.
 
-![Consumption Patterns](images/05_consumption_patterns.png)
+![Consumption Patterns](images/06_consumption_patterns.png)
 
 ### 2. Device Distribution
 > **Insight:** **HVAC (Sub_metering_3)** is the dominant energy consumer compared to Kitchen and Laundry appliances.
 
-![Device Distribution](images/02_device_level_distribution.png)
+![Device Distribution](images/02_distributions.png)
 
 ### 3. Correlation Analysis
 > **Insight:** Strong positive correlation exists between `Global_active_power` and `Global_intensity`.
 
-![Correlation](images/06_correlation_heatmap.png)
+![Correlation](images/05_correlation.png)
 
 ### 4. Missing Values Analysis
 > **Resolution:** Identified and imputed ~1.25% missing data points to ensure continuity.
 
-![Missing Values](images/01_missing_values_analysis.png)
+![Missing Values](images/01_missing_values.png)
+
+### 5. Outlier Detection
+> **Treatment:** Outliers detected via IQR and treated with Winsorization.
+
+![Outlier Detection](images/03_boxplots.png)
+
+### 6. Time Series Resampling
+> **Aggregation:** Data resampled to hourly and daily levels for analysis.
+
+![Resampled Time Series](images/04_resampling.png)
+
+### 7. Data Split Visualization
+> **Split:** Time-series aware split (70% train, 15% val, 15% test).
+
+![Data Split](images/07_data_split.png)
 
 ---
 

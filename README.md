@@ -51,19 +51,19 @@ We successfully processed 2,075,259 raw records, imputing missing values and tre
 
 | Missing Values Analysis | Device-Level Distribution |
 | :---: | :---: |
-| ![Missing Values](Milestone%201/images/01_missing_values_analysis.png) | ![Device Distribution](Milestone%201/images/02_device_level_distribution.png) |
+| ![Missing Values](Milestone%201/images/01_missing_values.png) | ![Device Distribution](Milestone%201/images/02_distributions.png) |
 
 **Highlights:**
 *   **Correlation:** Verified strong relationship between consumption and intensity.
 *   **Scaling:** Analyzed MinMax vs Standard Scaling; Standard Scaling adopted for normalization to ensure optimal model performance.
 *   **Heatmap:**
-    ![Correlation Heatmap](Milestone%201/images/06_correlation_heatmap.png)
+    ![Correlation Heatmap](Milestone%201/images/05_correlation.png)
 
 ### Milestone 2: Feature Engineering & Baseline Model
 We enhanced the dataset with temporal features (`IsWeekend`), Lag features, and device-level aggregations to capture hourly usage patterns.
 
 **Device Group Aggregation:**
-![Device Aggregation](Milestone%202/images/09_device_hourly_avg.png)
+![Device Aggregation](Milestone%202/week3_feature_engineering.png)
 
 **Feature Correlation Analysis:**
 ![Feature Correlation](Milestone%202/feature_correlation_analysis.png)
@@ -73,7 +73,7 @@ We enhanced the dataset with temporal features (`IsWeekend`), Lag features, and 
 
 **Baseline Model Performance (Ridge Regression):**
 - **Actual vs Predicted Plot:**
-    ![Actual vs Predicted](Milestone%202/images/10_actual_vs_predicted.png)
+    ![Actual vs Predicted](Milestone%202/week4_baseline_model_results.png)
 - **RMSE**: ~0.5066
 - **MAE**: ~0.3604
 - **R² Score**: ~0.5017
