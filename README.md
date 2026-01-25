@@ -40,6 +40,15 @@ This project aims to analyze and forecast household energy consumption using Mac
 ### Milestone 1: Data Understanding & EDA
 We successfully processed 2,075,259 raw records, imputing missing values and treating outliers with Winsorization (clipping at 1st and 99th percentiles).
 
+**Processing Summary:**
+- **Original records:** 2,075,259 (minute-level)
+- **After cleaning:** 2,075,259
+- **Hourly records:** 34,589
+- **Daily records:** 1,442
+- **Features engineered:** 41
+- **Missing values:** 181,853 → 0 (100% resolved)
+- **Outliers:** Winsorized at 0.5% and 99.5% percentiles
+
 | Missing Values Analysis | Device-Level Distribution |
 | :---: | :---: |
 | ![Missing Values](Milestone%201/images/01_missing_values_analysis.png) | ![Device Distribution](Milestone%201/images/02_device_level_distribution.png) |
@@ -56,12 +65,21 @@ We enhanced the dataset with temporal features (`IsWeekend`), Lag features, and 
 **Device Group Aggregation:**
 ![Device Aggregation](Milestone%202/images/09_device_hourly_avg.png)
 
-**Baseline Model Performance (Linear Regression):**
+**Feature Correlation Analysis:**
+![Feature Correlation](Milestone%202/feature_correlation_analysis.png)
+
+**Feature Importance:**
+![Feature Importance](Milestone%202/feature_importance.png)
+
+**Baseline Model Performance (Ridge Regression):**
 - **Actual vs Predicted Plot:**
     ![Actual vs Predicted](Milestone%202/images/10_actual_vs_predicted.png)
 - **RMSE**: ~0.5066
 - **MAE**: ~0.3604
 - **R² Score**: ~0.5017
+
+**Model Results Summary:**
+![Baseline Model Results](Milestone%202/baseline_model_results.png)
 
 ---
 

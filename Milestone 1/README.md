@@ -44,6 +44,16 @@ Milestone 1/
 - **Scaling:** Implemented **MinMax** and **Standard** scaling.
 - **Splitting:** Time-series split (Train: 70%, Val: 15%, Test: 15%).
 
+### 📊 Processing Summary
+- **Original records:** 2,075,259 (minute-level)
+- **After cleaning:** 2,075,259
+- **Hourly records:** 34,589
+- **Daily records:** 1,442
+- **Features engineered:** 41
+- **Missing values:** 181,853 → 0 (100% resolved)
+- **Outliers:** Winsorized at 0.5% and 99.5% percentiles
+- **Temporal consistency:** Verified & resampled
+
 ---
 
 ## 📊 Key Insights & Visualizations
