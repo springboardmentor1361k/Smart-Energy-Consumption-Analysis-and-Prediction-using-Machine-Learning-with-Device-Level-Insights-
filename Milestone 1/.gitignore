@@ -1,4 +1,2 @@
 # Ignore Jupyter checkpoints
 .ipynb_checkpoints/
-# Ignore images outputs (if images/ is still used for outputs)
-images/
