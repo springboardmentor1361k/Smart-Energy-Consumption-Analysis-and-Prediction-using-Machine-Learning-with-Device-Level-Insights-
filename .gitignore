@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual Environments
+env/
+venv/
+.venv/
+
+# Jupyter / Colab
+.ipynb_checkpoints/
+*.ipynb~
+
+# Data files (keep raw & processed data out of git)
+*.csv
+*.tsv
+*.xlsx
+*.json
+*.txt
+
+# Model files
+*.h5
+*.keras
+*.pt
+*.pth
+*.joblib
+*.pkl
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Google Colab
+/content/
