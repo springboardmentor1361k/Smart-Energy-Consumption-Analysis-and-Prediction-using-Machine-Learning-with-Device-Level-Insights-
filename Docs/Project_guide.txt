@@ -1,0 +1,173 @@
+Smart Energy Consumption Analysis and Prediction using Machine Learning
+________________________________________
+Project Overview (Understand Before Coding)
+You are building a Smart Energy Consumption Analysis System that:
+•	Understands device-level energy usage over time
+•	Analyzes historical patterns
+•	Predicts future energy consumption
+•	Provides insights and energy-saving suggestions
+•	Exposes results through a simple web dashboard
+This is not just an ML model. It is a full pipeline project:
+Data → Cleaning → Features → Models → Evaluation → API → Dashboard → Deployment
+________________________________________
+WEEK 1 — DATA UNDERSTANDING & EXPLORATION (FOUNDATION WEEK)
+Goal of Week 1
+Your goal is not modeling. Your goal is to understand the data deeply.
+A senior engineer never trains a model without knowing:
+•	What each column means
+•	How the data is collected
+•	Where the data can break
+What You Must Do (Step-by-Step)
+1.	Define the project scope clearly
+o	What is energy consumption?
+o	What does “device-level” mean?
+o	What are we trying to predict (hourly/daily consumption)?
+2.	Load the SmartHome Energy Dataset
+o	Check file format (CSV)
+o	Inspect number of rows and columns
+o	Print first and last few rows
+3.	Understand each column
+o	Timestamp
+o	Device name
+o	Power consumption value
+o	Units (Watts / kWh)
+4.	Exploratory Data Analysis (EDA)
+o	Plot energy consumption over time
+o	Check missing timestamps
+o	Identify abnormal spikes
+Mentor Notes (Important)
+•	Do NOT clean data blindly
+•	Write markdown explanations in the notebook
+•	Plots should answer questions, not decorate
+Week 1 Output
+•	Cleanly structured notebook
+•	Clear EDA plots
+•	Written observations
+________________________________________
+WEEK 2 — DATA CLEANING & PREPROCESSING (ENGINEERING DISCIPLINE)
+Goal of Week 2
+Turn raw data into model-ready data.
+Bad preprocessing = bad model (no exceptions).
+What You Must Do
+1.	Handle Missing Values
+o	Missing timestamps → resample
+o	Missing readings → interpolation / forward-fill
+2.	Outlier Handling
+o	Detect abnormal power spikes
+o	Decide whether to cap or remove
+3.	Time Conversion & Resampling
+o	Convert timestamp to datetime
+o	Resample to:
+	Hourly
+	Daily (if needed)
+4.	Scaling / Normalization
+o	Use MinMaxScaler or StandardScaler
+o	Explain why scaling is required
+5.	Train–Test Split (Time-Based)
+o	Never shuffle time series data
+Mentor Notes
+•	Always explain why a preprocessing step is used
+•	Code without explanation = incomplete work
+Week 2 Output
+•	Final cleaned dataset
+•	Preprocessing pipeline
+•	Dataset ready for feature engineering
+________________________________________
+WEEK 3 — FEATURE ENGINEERING (WHERE ML REALLY BEGINS)
+Goal of Week 3
+Teach the model patterns, not just values.
+What You Must Do
+1.	Time-Based Features
+o	Hour of day
+o	Day of week
+o	Month
+o	Weekend / weekday
+2.	Lag Features
+o	Previous hour consumption
+o	Previous day consumption
+3.	Rolling Statistics
+o	Moving averages
+o	Rolling standard deviation
+4.	Device-Level Aggregations
+o	Average consumption per device
+o	Peak usage times
+Mentor Notes
+•	Feature engineering decides model success
+•	More features ≠ better features
+Week 3 Output
+•	Feature matrix (X)
+•	Target variable (y)
+•	Visual explanation of features
+________________________________________
+WEEK 4 — BASELINE MODEL (DISCIPLINE WEEK)
+Goal of Week 4
+Build a simple model to set a performance baseline.
+What You Must Do
+1.	Implement Linear Regression
+2.	Train the model
+3.	Evaluate using:
+o	MAE
+o	RMSE
+4.	Visualize Predictions
+o	Actual vs Predicted plots
+Mentor Notes
+•	Never skip baseline models
+•	Deep learning without baseline is meaningless
+Week 4 Output
+•	Baseline model notebook
+•	Evaluation metrics
+•	Comparison-ready results
+________________________________________
+WEEK 5 — LSTM MODEL (ADVANCED MODELING)
+Goal of Week 5
+Learn sequence-based deep learning.
+What You Must Do
+1.	Prepare sequences for LSTM
+2.	Design LSTM architecture
+3.	Train model using time windows
+4.	Tune hyperparameters
+Mentor Notes
+•	Understand sequence length
+•	Overfitting is common—watch validation loss
+Week 5 Output
+•	Trained LSTM model
+•	Loss curves
+•	Saved model
+________________________________________
+WEEK 6 — MODEL COMPARISON & INTEGRATION
+Goal of Week 6
+Decide which model is production-ready.
+What You Must Do
+1.	Compare Linear Regression vs LSTM
+2.	Evaluate using:
+o	MAE
+o	RMSE
+o	R²
+3.	Select best model
+4.	Wrap model for Flask API usage
+Mentor Notes
+•	Accuracy alone is not enough
+•	Stability matters
+________________________________________
+WEEK 7 — DASHBOARD & INSIGHTS
+Goal of Week 7
+Convert numbers into user understanding.
+What You Must Do
+1.	Build visual dashboards
+2.	Show trends (hourly/daily/weekly)
+3.	Add smart energy-saving suggestions
+Mentor Notes
+•	Insights should be actionable
+________________________________________
+WEEK 8 — DEPLOYMENT & FINAL DELIVERY
+Goal of Week 8
+Deliver like a professional engineer.
+What You Must Do
+1.	Integrate Flask backend
+2.	Connect frontend
+3.	Final testing
+4.	Clean documentation
+5.	Final GitHub push
+
+________________________________________
+
