@@ -1,0 +1,19 @@
+{
+    "best_model": "Linear Regression",
+    "baseline_metrics": {
+        "Dataset": "Test",
+        "MAE": 0.0029681222297537,
+        "RMSE": 0.0103145626921697,
+        "R\u00b2 Score": 0.999778537505388,
+        "MAPE (%)": 0.6445632139972133
+    },
+    "lstm_metrics": {
+        "Dataset": "Test",
+        "MAE": 0.3097262078395702,
+        "RMSE": 0.4525946284157112,
+        "R\u00b2 Score": 0.5744963063947175,
+        "MAPE (%)": 39.14772128816069
+    },
+    "lstm_wins": 0,
+    "lr_wins": 4
+}
