@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+
 Infosys – Smart Energy Consumption Prediction
 
 This project implements an advanced Bidirectional LSTM model to predict household energy consumption using time-series data. It provides device-level insights for optimized energy management.
@@ -20,7 +21,7 @@ Status:
 Modules 1–8 completed; project fully deployed and accessible via ngrok.
 
 Live Demo:
-Smart Energy Consumption Prediction
+[Smart Energy Consumption Prediction](https://unsonorous-deborah-perioecic.ngrok-free.dev/)
 
 Project Highlights:
 
