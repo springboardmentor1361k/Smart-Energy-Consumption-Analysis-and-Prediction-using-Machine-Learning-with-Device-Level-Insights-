@@ -1,7 +1,7 @@
 # ⚡ Smart Energy Consumption Analysis & Prediction
 
 > **AI/ML-Driven Analysis and Forecasting of Device-Level Energy Consumption**  
-> Infosys Springboard Internship Project — Batch 11
+> Infosys Springboard Internship Project
 
 ![Python](https://img.shields.io/badge/Python-3.12-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0-green)
@@ -202,7 +202,7 @@ python main.py --all
 ## 👤 Author
 
 **Suraj Surve**  
-Infosys Springboard Internship — Batch 11  
+Infosys Springboard Internship  
 Project: AI/ML-Driven Device-Level Energy Analysis & Forecasting
 
 ---
