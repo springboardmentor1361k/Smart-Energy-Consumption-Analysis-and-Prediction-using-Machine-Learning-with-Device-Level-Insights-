@@ -1,0 +1,250 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Smart Energy Monitor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-chart-line"></i> Energy Dashboard</h1>
+        <p>Real-time energy consumption analytics</p>
+    </div>
+
+    <!-- Time Period Selector -->
+    <div class="time-selector">
+        <button class="time-btn active" onclick="showPeriod('hourly')">
+            <i class="fas fa-clock"></i> Last 24 Hours
+        </button>
+        <button class="time-btn" onclick="showPeriod('daily')">
+            <i class="fas fa-calendar-day"></i> Last 30 Days
+        </button>
+    </div>
+
+    <!-- Hourly View -->
+    <div id="hourly-view" class="period-view">
+        <div class="chart-container">
+            <h3>Hourly Power Consumption (Last 24 Hours)</h3>
+            <canvas id="hourlyChart"></canvas>
+        </div>
+
+        <div class="chart-container">
+            <h3>Device-wise Energy Usage</h3>
+            <canvas id="devicesChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Daily View -->
+    <div id="daily-view" class="period-view" style="display: none;">
+        <div class="chart-container">
+            <h3>Daily Average Consumption (Last 30 Days)</h3>
+            <canvas id="dailyChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <div class="dashboard-stats">
+        <div class="stat-box">
+            <i class="fas fa-bolt stat-box-icon"></i>
+            <div>
+                <p class="stat-box-label">Current Average</p>
+                <p class="stat-box-value">{{ "%.2f"|format(data.statistics.average_power) }} kW</p>
+            </div>
+        </div>
+
+        <div class="stat-box">
+            <i class="fas fa-arrow-up stat-box-icon" style="color: #e74c3c;"></i>
+            <div>
+                <p class="stat-box-label">Peak Power</p>
+                <p class="stat-box-value">{{ "%.2f"|format(data.statistics.max_power) }} kW</p>
+            </div>
+        </div>
+
+        <div class="stat-box">
+            <i class="fas fa-arrow-down stat-box-icon" style="color: #2ecc71;"></i>
+            <div>
+                <p class="stat-box-label">Minimum Power</p>
+                <p class="stat-box-value">{{ "%.2f"|format(data.statistics.min_power) }} kW</p>
+            </div>
+        </div>
+
+        <div class="stat-box">
+            <i class="fas fa-clock stat-box-icon" style="color: #f39c12;"></i>
+            <div>
+                <p class="stat-box-label">Peak Time</p>
+                <p class="stat-box-value">{{ data.statistics.peak_hour }}:00</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Data from Flask
+const hourlyData = {{ hourly_data | tojson }};
+const dailyData = {{ daily_data | tojson }};
+
+// Hourly Power Chart
+const hourlyCtx = document.getElementById('hourlyChart').getContext('2d');
+const hourlyChart = new Chart(hourlyCtx, {
+    type: 'line',
+    data: {
+        labels: hourlyData.labels,
+        datasets: [{
+            label: 'Power Consumption (kW)',
+            data: hourlyData.power,
+            borderColor: '#3498db',
+            backgroundColor: 'rgba(52, 152, 219, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Power (kW)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Time'
+                }
+            }
+        }
+    }
+});
+
+// Devices Stacked Chart
+const devicesCtx = document.getElementById('devicesChart').getContext('2d');
+const devicesChart = new Chart(devicesCtx, {
+    type: 'line',
+    data: {
+        labels: hourlyData.labels,
+        datasets: [
+            {
+                label: 'Kitchen',
+                data: hourlyData.kitchen,
+                borderColor: '#e74c3c',
+                backgroundColor: 'rgba(231, 76, 60, 0.3)',
+                fill: true
+            },
+            {
+                label: 'Laundry',
+                data: hourlyData.laundry,
+                borderColor: '#3498db',
+                backgroundColor: 'rgba(52, 152, 219, 0.3)',
+                fill: true
+            },
+            {
+                label: 'HVAC',
+                data: hourlyData.hvac,
+                borderColor: '#2ecc71',
+                backgroundColor: 'rgba(46, 204, 113, 0.3)',
+                fill: true
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                stacked: true,
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Energy (Wh)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Time'
+                }
+            }
+        }
+    }
+});
+
+// Daily Chart
+const dailyCtx = document.getElementById('dailyChart').getContext('2d');
+const dailyChart = new Chart(dailyCtx, {
+    type: 'bar',
+    data: {
+        labels: dailyData.labels,
+        datasets: [{
+            label: 'Average Power (kW)',
+            data: dailyData.power,
+            backgroundColor: 'rgba(155, 89, 182, 0.7)',
+            borderColor: '#9b59b6',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Power (kW)'
+                }
+            },
+            x: {
+                title: {
+                    display: true,
+                    text: 'Date'
+                }
+            }
+        }
+    }
+});
+
+// Period switcher
+function showPeriod(period) {
+    // Hide all views
+    document.querySelectorAll('.period-view').forEach(view => {
+        view.style.display = 'none';
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.time-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    
+    // Show selected view
+    if (period === 'hourly') {
+        document.getElementById('hourly-view').style.display = 'block';
+        document.querySelectorAll('.time-btn')[0].classList.add('active');
+    } else if (period === 'daily') {
+        document.getElementById('daily-view').style.display = 'block';
+        document.querySelectorAll('.time-btn')[1].classList.add('active');
+    }
+}
+</script>
+{% endblock %}

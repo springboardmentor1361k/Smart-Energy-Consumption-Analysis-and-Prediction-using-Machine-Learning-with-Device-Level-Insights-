@@ -225,3 +225,6 @@ models/*.joblib
 *.h5
 *.joblib
 
+venv/
+__pycache__/
+*.pyc

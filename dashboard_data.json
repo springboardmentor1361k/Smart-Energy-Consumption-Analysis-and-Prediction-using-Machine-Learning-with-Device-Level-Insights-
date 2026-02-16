@@ -1,0 +1,73 @@
+{
+    "statistics": {
+        "average_power": 1.08,
+        "max_power": 4.84,
+        "min_power": 0.12,
+        "peak_hour": 20,
+        "off_peak_hour": 4
+    },
+    "device_stats": {
+        "Kitchen": {
+            "average": 1.1,
+            "total": 37458.5,
+            "percentage": 12.61
+        },
+        "Laundry": {
+            "average": 1.22,
+            "total": 41541.06,
+            "percentage": 13.98
+        },
+        "HVAC": {
+            "average": 6.38,
+            "total": 218086.99,
+            "percentage": 73.41
+        }
+    },
+    "suggestions": [
+        {
+            "category": "Peak Hour Usage",
+            "severity": "High",
+            "message": "High energy consumption detected at 20:00. Consider shifting heavy appliance usage to off-peak hours (4:00).",
+            "savings": "15-20%"
+        },
+        {
+            "category": "HVAC Optimization",
+            "severity": "Medium",
+            "message": "HVAC accounts for 73.4% of total consumption. Consider adjusting thermostat settings or using programmable thermostats.",
+            "savings": "10-15%"
+        },
+        {
+            "category": "Weekend Usage",
+            "severity": "Low",
+            "message": "Weekend consumption is 18.3% higher than weekdays. Review unnecessary appliance usage during weekends.",
+            "savings": "5-10%"
+        }
+    ],
+    "hourly_pattern": {
+        "0": 0.6568380050758031,
+        "1": 0.5375167837078652,
+        "2": 0.4804679608645972,
+        "3": 0.4448499852090793,
+        "4": 0.44384449009302435,
+        "5": 0.4535932207365705,
+        "6": 0.78573370030654,
+        "7": 1.497600554323901,
+        "8": 1.4566475103246819,
+        "9": 1.3291170427938905,
+        "10": 1.2542134546981247,
+        "11": 1.2374062231389773,
+        "12": 1.1951789300801219,
+        "13": 1.1329929050982448,
+        "14": 1.0757021271027294,
+        "15": 0.9823401892238487,
+        "16": 0.9429501497249196,
+        "17": 1.0463970591075724,
+        "18": 1.309615971576608,
+        "19": 1.7058528088567326,
+        "20": 1.8645680330264713,
+        "21": 1.85161034010721,
+        "22": 1.40408408887117,
+        "23": 0.8979484338475923
+    },
+    "last_updated": "2026-02-14 22:35:31"
+}

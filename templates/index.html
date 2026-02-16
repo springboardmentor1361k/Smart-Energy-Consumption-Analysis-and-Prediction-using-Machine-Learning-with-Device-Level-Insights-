@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Smart Energy Monitor{% endblock %}
+
+{% block content %}
+<div class="hero-section">
+    <div class="hero-content">
+        <h1><i class="fas fa-bolt"></i> Smart Energy Consumption Analysis</h1>
+        <p class="hero-subtitle">AI-Powered Energy Monitoring and Prediction System</p>
+        <div class="hero-buttons">
+            <a href="/dashboard" class="btn btn-primary">
+                <i class="fas fa-chart-line"></i> View Dashboard
+            </a>
+            <a href="/predict" class="btn btn-secondary">
+                <i class="fas fa-brain"></i> Predict Consumption
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="container">
+    <h2 class="section-title">Quick Statistics</h2>
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #3498db;">
+                <i class="fas fa-plug"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Average Power</h3>
+                <p class="stat-value">{{ "%.2f"|format(data.statistics.average_power) }} kW</p>
+                <p class="stat-label">Current average consumption</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e74c3c;">
+                <i class="fas fa-arrow-up"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Peak Hour</h3>
+                <p class="stat-value">{{ data.statistics.peak_hour }}:00</p>
+                <p class="stat-label">Highest consumption time</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #2ecc71;">
+                <i class="fas fa-arrow-down"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Off-Peak Hour</h3>
+                <p class="stat-value">{{ data.statistics.off_peak_hour }}:00</p>
+                <p class="stat-label">Lowest consumption time</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #f39c12;">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <div class="stat-content">
+                <h3>Device Count</h3>
+                <p class="stat-value">{{ data.device_stats|length }}</p>
+                <p class="stat-label">Monitored devices</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <h2 class="section-title">Features</h2>
+    <div class="features-grid">
+        <div class="feature-card">
+            <i class="fas fa-chart-line feature-icon"></i>
+            <h3>Real-time Monitoring</h3>
+            <p>Track your energy consumption in real-time with hourly, daily, and monthly views.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-brain feature-icon"></i>
+            <h3>AI Predictions</h3>
+            <p>LSTM neural network predicts future energy consumption with high accuracy.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-lightbulb feature-icon"></i>
+            <h3>Smart Suggestions</h3>
+            <p>Get personalized energy-saving tips based on your consumption patterns.</p>
+        </div>
+
+        <div class="feature-card">
+            <i class="fas fa-mobile-alt feature-icon"></i>
+            <h3>Device-Level Insights</h3>
+            <p>Monitor individual appliances: Kitchen, Laundry, and HVAC systems.</p>
+        </div>
+    </div>
+
+    <!-- Device Statistics -->
+    <h2 class="section-title">Device Energy Distribution</h2>
+    <div class="device-stats">
+        {% for device_name, device_data in data.device_stats.items() %}
+        <div class="device-card">
+            <div class="device-header">
+                <h3>
+                    {% if device_name == 'Kitchen' %}
+                        <i class="fas fa-utensils"></i>
+                    {% elif device_name == 'Laundry' %}
+                        <i class="fas fa-tshirt"></i>
+                    {% elif device_name == 'HVAC' %}
+                        <i class="fas fa-wind"></i>
+                    {% endif %}
+                    {{ device_name }}
+                </h3>
+            </div>
+            <div class="device-body">
+                <div class="device-metric">
+                    <span class="metric-label">Average</span>
+                    <span class="metric-value">{{ "%.2f"|format(device_data.average) }} Wh</span>
+                </div>
+                <div class="device-metric">
+                    <span class="metric-label">Contribution</span>
+                    <span class="metric-value">{{ "%.1f"|format(device_data.percentage) }}%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: {{ device_data.percentage }}%;"></div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Call to Action -->
+    <div class="cta-section">
+        <h2>Ready to Optimize Your Energy Usage?</h2>
+        <p>Explore detailed analytics and get personalized recommendations</p>
+        <a href="/suggestions" class="btn btn-primary btn-large">
+            <i class="fas fa-lightbulb"></i> View Energy Saving Tips
+        </a>
+    </div>
+</div>
+{% endblock %}

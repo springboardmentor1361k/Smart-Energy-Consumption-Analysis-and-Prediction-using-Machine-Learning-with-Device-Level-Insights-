@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}Energy Tips - Smart Energy Monitor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-lightbulb"></i> Smart Energy Saving Tips</h1>
+        <p>Personalized recommendations based on your consumption patterns</p>
+    </div>
+
+    <div class="tips-summary">
+        <div class="tip-stat">
+            <i class="fas fa-list"></i>
+            <div>
+                <h3>{{ suggestions|length }}</h3>
+                <p>Active Suggestions</p>
+            </div>
+        </div>
+        <div class="tip-stat">
+            <i class="fas fa-piggy-bank"></i>
+            <div>
+                <h3>Up to 20%</h3>
+                <p>Potential Savings</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="suggestions-container">
+        {% for suggestion in suggestions %}
+        <div class="suggestion-card severity-{{ suggestion.severity|lower }}">
+            <div class="suggestion-header">
+                <div class="suggestion-title">
+                    <span class="suggestion-number">#{{ loop.index }}</span>
+                    <h3>{{ suggestion.category }}</h3>
+                </div>
+                <span class="severity-badge severity-{{ suggestion.severity|lower }}">
+                    {% if suggestion.severity == 'High' %}
+                        <i class="fas fa-exclamation-circle"></i>
+                    {% elif suggestion.severity == 'Medium' %}
+                        <i class="fas fa-info-circle"></i>
+                    {% else %}
+                        <i class="fas fa-check-circle"></i>
+                    {% endif %}
+                    {{ suggestion.severity }}
+                </span>
+            </div>
+            
+            <div class="suggestion-body">
+                <p class="suggestion-message">{{ suggestion.message }}</p>
+                
+                <div class="suggestion-footer">
+                    <div class="savings-info">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Potential Savings: <strong>{{ suggestion.savings }}</strong></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        
+        {% if not suggestions %}
+        <div class="no-suggestions">
+            <i class="fas fa-check-circle"></i>
+            <h3>Great Job!</h3>
+            <p>You're doing excellent with your energy management. Keep up the good work!</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- General Tips Section -->
+    <div class="general-tips-section">
+        <h2><i class="fas fa-star"></i> General Energy Saving Tips</h2>
+        
+        <div class="general-tips-grid">
+            <div class="general-tip-card">
+                <i class="fas fa-snowflake tip-icon"></i>
+                <h4>HVAC Optimization</h4>
+                <ul>
+                    <li>Set thermostat 2-3°F higher in summer, lower in winter</li>
+                    <li>Clean or replace filters monthly</li>
+                    <li>Use programmable thermostats</li>
+                    <li>Seal air leaks around windows and doors</li>
+                </ul>
+            </div>
+
+            <div class="general-tip-card">
+                <i class="fas fa-utensils tip-icon"></i>
+                <h4>Kitchen Appliances</h4>
+                <ul>
+                    <li>Run dishwasher only when full</li>
+                    <li>Use microwave for small meals</li>
+                    <li>Keep refrigerator at 37-40°F</li>
+                    <li>Avoid opening oven door while cooking</li>
+                </ul>
+            </div>
+
+            <div class="general-tip-card">
+                <i class="fas fa-tshirt tip-icon"></i>
+                <h4>Laundry Efficiency</h4>
+                <ul>
+                    <li>Wash clothes in cold water</li>
+                    <li>Run full loads only</li>
+                    <li>Clean lint trap after each use</li>
+                    <li>Air dry when possible</li>
+                </ul>
+            </div>
+
+            <div class="general-tip-card">
+                <i class="fas fa-lightbulb tip-icon"></i>
+                <h4>Lighting</h4>
+                <ul>
+                    <li>Switch to LED bulbs</li>
+                    <li>Use natural light during day</li>
+                    <li>Install motion sensors</li>
+                    <li>Turn off lights when leaving rooms</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,391 @@
+{% extends "base.html" %}
+
+{% block title %}Predict - Smart Energy Monitor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-brain"></i> Energy Consumption Prediction</h1>
+        <p>AI-powered forecasting using LSTM neural networks</p>
+    </div>
+
+    <div class="prediction-section">
+        <div class="prediction-info">
+            <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+            <p>Our machine learning model analyzes the last 24 hours of energy consumption data to predict future usage. The model considers:</p>
+            <ul>
+                <li>Historical consumption patterns</li>
+                <li>Time of day and day of week</li>
+                <li>Device-level energy usage</li>
+                <li>Seasonal trends</li>
+            </ul>
+        </div>
+
+        <div class="prediction-form-container">
+            <h3><i class="fas fa-chart-line"></i> Make Prediction</h3>
+            <button onclick="makePrediction()" class="btn btn-primary btn-large">
+                <i class="fas fa-play"></i> Predict Next Hour Consumption
+            </button>
+            
+            <div id="prediction-loading" class="loading-spinner" style="display: none;">
+                <i class="fas fa-spinner fa-spin"></i> Analyzing data...
+            </div>
+            
+            <div id="prediction-result" class="prediction-result" style="display: none;">
+                <div class="result-header">
+                    <i class="fas fa-check-circle"></i>
+                    <h3>Prediction Complete</h3>
+                </div>
+                
+                <div class="result-main">
+                    <p class="result-label">Predicted Power Consumption</p>
+                    <p class="result-value" id="prediction-value">0.00 kW</p>
+                </div>
+                
+                <div class="result-details">
+                    <div class="detail-item">
+                        <span class="detail-label">Current Power:</span>
+                        <span class="detail-value" id="current-power">0.00 kW</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Expected Change:</span>
+                        <span class="detail-value" id="power-change">0.00 kW</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Change Percentage:</span>
+                        <span class="detail-value" id="change-percent">0.00%</span>
+                    </div>
+                </div>
+                
+                <div class="result-model">
+                    <p><strong>Prediction Method:</strong> <span id="model-used">N/A</span></p>
+                    <p class="result-message" id="result-message"></p>
+                </div>
+            </div>
+            
+            <div id="prediction-error" class="prediction-error" style="display: none;">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p id="error-message">An error occurred</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Model Information -->
+    <div class="model-info-section">
+        <h3><i class="fas fa-robot"></i> About Our Models</h3>
+        
+        <div class="models-grid">
+            <div class="model-card">
+                <h4><i class="fas fa-chart-line"></i> Linear Regression</h4>
+                <p><strong>Type:</strong> Baseline Model</p>
+                <p><strong>Accuracy:</strong> ~85-90% R² Score</p>
+                <p><strong>Speed:</strong> Very Fast</p>
+                <p><strong>Use Case:</strong> Quick predictions, simple patterns</p>
+            </div>
+            
+            <div class="model-card featured">
+                <div class="featured-badge">Best Model</div>
+                <h4><i class="fas fa-brain"></i> LSTM Neural Network</h4>
+                <p><strong>Type:</strong> Deep Learning</p>
+                <p><strong>Accuracy:</strong> ~90-95% R² Score</p>
+                <p><strong>Speed:</strong> Fast</p>
+                <p><strong>Use Case:</strong> Complex patterns, high accuracy</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.prediction-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.prediction-info {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.prediction-info h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.prediction-info ul {
+    margin-left: 1.5rem;
+    color: #666;
+    line-height: 1.8;
+}
+
+.prediction-form-container {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.prediction-form-container h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.loading-spinner {
+    text-align: center;
+    padding: 2rem;
+    color: #3498db;
+    font-size: 1.2rem;
+}
+
+.loading-spinner i {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+}
+
+.prediction-result {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border-left: 4px solid #2ecc71;
+}
+
+.result-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    color: #2ecc71;
+}
+
+.result-header i {
+    font-size: 1.5rem;
+}
+
+.result-main {
+    text-align: center;
+    padding: 1.5rem 0;
+    border-bottom: 2px solid #ddd;
+    margin-bottom: 1.5rem;
+}
+
+.result-label {
+    font-size: 0.9rem;
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+.result-value {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #2c3e50;
+    margin: 0;
+}
+
+.result-details {
+    display: grid;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.detail-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem;
+    background: white;
+    border-radius: 4px;
+}
+
+.detail-label {
+    color: #666;
+    font-weight: 500;
+}
+
+.detail-value {
+    color: #2c3e50;
+    font-weight: bold;
+}
+
+.result-model {
+    padding-top: 1rem;
+    border-top: 2px solid #ddd;
+    color: #666;
+}
+
+.result-message {
+    margin-top: 0.5rem;
+    font-style: italic;
+    color: #7f8c8d;
+}
+
+.prediction-error {
+    margin-top: 2rem;
+    padding: 1.5rem;
+    background: #ffebee;
+    border-radius: 8px;
+    border-left: 4px solid #e74c3c;
+    color: #c0392b;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.prediction-error i {
+    font-size: 1.5rem;
+}
+
+.model-info-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.model-info-section h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+}
+
+.models-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.model-card {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    border: 2px solid #ddd;
+    position: relative;
+}
+
+.model-card.featured {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #764ba2;
+}
+
+.model-card.featured p {
+    color: white;
+}
+
+.featured-badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: #2ecc71;
+    color: white;
+    padding: 0.25rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.model-card h4 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+}
+
+.model-card.featured h4 {
+    color: white;
+}
+
+.model-card p {
+    margin-bottom: 0.5rem;
+    color: #666;
+}
+
+@media (max-width: 768px) {
+    .prediction-section {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function makePrediction() {
+    const loadingDiv = document.getElementById('prediction-loading');
+    const resultDiv = document.getElementById('prediction-result');
+    const errorDiv = document.getElementById('prediction-error');
+    
+    // Hide previous results
+    resultDiv.style.display = 'none';
+    errorDiv.style.display = 'none';
+    loadingDiv.style.display = 'block';
+    
+    try {
+        const response = await fetch('/predict', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        const data = await response.json();
+        console.log('Prediction response:', data);
+        
+        loadingDiv.style.display = 'none';
+        
+        if (data.success) {
+            // Display results - UPDATED to match backend response
+            document.getElementById('prediction-value').textContent = 
+                (data.prediction || 0).toFixed(2) + ' kW';
+            
+            document.getElementById('current-power').textContent = 
+                (data.current_power || 0).toFixed(2) + ' kW';
+            
+            document.getElementById('power-change').textContent = 
+                (data.change || 0).toFixed(2) + ' kW';
+            
+            const changePercent = data.change_percent || 0;
+            const changeElem = document.getElementById('change-percent');
+            changeElem.textContent = changePercent.toFixed(2) + '%';
+            
+            // Color code the change
+            if (changePercent > 0) {
+                changeElem.style.color = '#e74c3c'; // Red for increase
+            } else if (changePercent < 0) {
+                changeElem.style.color = '#2ecc71'; // Green for decrease
+            }
+            
+            document.getElementById('model-used').textContent = 
+                data.method === 'lstm' ? 'LSTM Neural Network' : 
+                data.method === 'fallback' ? 'Simple Average (Fallback)' : 
+                data.method || 'Unknown';
+            
+            document.getElementById('result-message').textContent = 
+                data.message || '';
+            
+            // Show warning if using fallback
+            if (data.method === 'fallback' && data.error) {
+                const warningMsg = document.createElement('p');
+                warningMsg.style.color = '#f39c12';
+                warningMsg.style.marginTop = '0.5rem';
+                warningMsg.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Note: ML model unavailable, using fallback prediction.';
+                document.querySelector('.result-model').appendChild(warningMsg);
+            }
+            
+            resultDiv.style.display = 'block';
+        } else {
+            // Display error
+            document.getElementById('error-message').textContent = 
+                data.error || 'Prediction failed';
+            errorDiv.style.display = 'block';
+        }
+    } catch (error) {
+        loadingDiv.style.display = 'none';
+        console.error('Prediction error:', error);
+        document.getElementById('error-message').textContent = 
+            'Network error: ' + error.message;
+        errorDiv.style.display = 'block';
+    }
+}
+</script>
+{% endblock %}

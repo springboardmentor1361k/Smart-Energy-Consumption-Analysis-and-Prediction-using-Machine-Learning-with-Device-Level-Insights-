@@ -1,0 +1,303 @@
+{% extends "base.html" %}
+
+{% block title %}About - Smart Energy Monitor{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="page-header">
+        <h1><i class="fas fa-info-circle"></i> About This Project</h1>
+        <p>Smart Energy Consumption Analysis & Prediction System</p>
+    </div>
+
+    <div class="about-section">
+        <div class="about-card">
+            <h2><i class="fas fa-bullseye"></i> Project Overview</h2>
+            <p>This Smart Energy Consumption Analysis system is a comprehensive machine learning solution designed to monitor, analyze, and predict household energy consumption at the device level. The system provides actionable insights and personalized recommendations to help reduce energy waste and lower electricity costs.</p>
+        </div>
+
+        <div class="about-card">
+            <h2><i class="fas fa-cogs"></i> Technology Stack</h2>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <i class="fas fa-brain"></i>
+                    <h4>Machine Learning</h4>
+                    <p>LSTM Neural Networks, Linear Regression</p>
+                </div>
+                <div class="tech-item">
+                    <i class="fab fa-python"></i>
+                    <h4>Backend</h4>
+                    <p>Python, Flask, TensorFlow, Scikit-learn</p>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-chart-bar"></i>
+                    <h4>Data Analysis</h4>
+                    <p>Pandas, NumPy, Matplotlib, Seaborn</p>
+                </div>
+                <div class="tech-item">
+                    <i class="fas fa-code"></i>
+                    <h4>Frontend</h4>
+                    <p>HTML5, CSS3, JavaScript, Chart.js</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-card">
+            <h2><i class="fas fa-tasks"></i> Key Features</h2>
+            <ul class="features-list">
+                <li><i class="fas fa-check"></i> Real-time energy consumption monitoring</li>
+                <li><i class="fas fa-check"></i> Device-level energy tracking (Kitchen, Laundry, HVAC)</li>
+                <li><i class="fas fa-check"></i> AI-powered consumption prediction using LSTM</li>
+                <li><i class="fas fa-check"></i> Interactive dashboards with hourly, daily, and monthly views</li>
+                <li><i class="fas fa-check"></i> Smart energy-saving suggestions</li>
+                <li><i class="fas fa-check"></i> RESTful API for data access</li>
+                <li><i class="fas fa-check"></i> Responsive web interface</li>
+            </ul>
+        </div>
+
+        <div class="about-card">
+            <h2><i class="fas fa-database"></i> Dataset Information</h2>
+            <p><strong>Source:</strong> UCI Machine Learning Repository</p>
+            <p><strong>Dataset:</strong> Individual Household Electric Power Consumption</p>
+            <p><strong>Records:</strong> 2,075,259 measurements</p>
+            <p><strong>Time Period:</strong> December 2006 - November 2010 (47 months)</p>
+            <p><strong>Granularity:</strong> Minute-level readings</p>
+            <p><strong>Features:</strong> Global active power, Sub-metering (Kitchen, Laundry, HVAC)</p>
+        </div>
+
+        <div class="about-card">
+            <h2><i class="fas fa-chart-line"></i> Model Performance</h2>
+            <div class="model-comparison">
+                <div class="model-perf">
+                    <h4>Linear Regression (Baseline)</h4>
+                    <p>R² Score: ~85-90%</p>
+                    <p>MAE: ~0.15-0.25 kW</p>
+                    <p>Training Time: Fast</p>
+                </div>
+                <div class="model-perf featured">
+                    <div class="badge">Best Model</div>
+                    <h4>LSTM Neural Network</h4>
+                    <p>R² Score: ~90-95%</p>
+                    <p>MAE: ~0.10-0.20 kW</p>
+                    <p>Training Time: Moderate</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-card">
+            <h2><i class="fas fa-road"></i> Development Milestones</h2>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-marker">1</div>
+                    <div class="timeline-content">
+                        <h4>Data Collection & Preprocessing</h4>
+                        <p>Cleaned 2M+ records, handled missing values, created train/val/test splits</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">2</div>
+                    <div class="timeline-content">
+                        <h4>Feature Engineering</h4>
+                        <p>Created 80+ features including lag, rolling averages, and temporal patterns</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">3</div>
+                    <div class="timeline-content">
+                        <h4>Model Development</h4>
+                        <p>Trained Linear Regression baseline and LSTM deep learning model</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-marker">4</div>
+                    <div class="timeline-content">
+                        <h4>Web Application</h4>
+                        <p>Built Flask API, interactive dashboards, and prediction interface</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="about-card">
+            <h2><i class="fas fa-graduation-cap"></i> Academic Purpose</h2>
+            <p>This project was developed as part of a Machine Learning internship program focused on applying deep learning techniques to real-world energy consumption data.</p>
+            <p><strong>Objectives:</strong></p>
+            <ul class="features-list">
+                <li><i class="fas fa-check"></i> Demonstrate end-to-end ML pipeline development</li>
+                <li><i class="fas fa-check"></i> Apply LSTM networks to time series forecasting</li>
+                <li><i class="fas fa-check"></i> Create practical, user-facing ML applications</li>
+                <li><i class="fas fa-check"></i> Develop full-stack web development skills</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+.about-section {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.about-card {
+    background: white;
+    padding: 2rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.about-card h2 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.about-card p {
+    color: #666;
+    line-height: 1.8;
+    margin-bottom: 1rem;
+}
+
+.tech-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.tech-item {
+    text-align: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.tech-item i {
+    font-size: 2.5rem;
+    color: #3498db;
+    margin-bottom: 0.5rem;
+}
+
+.tech-item h4 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.tech-item p {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.features-list {
+    list-style: none;
+    padding: 0;
+}
+
+.features-list li {
+    padding: 0.5rem 0;
+    color: #666;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.features-list i {
+    color: #2ecc71;
+}
+
+.model-comparison {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 2rem;
+    margin-top: 1rem;
+}
+
+.model-perf {
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    position: relative;
+}
+
+.model-perf.featured {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.model-perf.featured p {
+    color: white;
+}
+
+.badge {
+    position: absolute;
+    top: -12px;
+    right: 20px;
+    background: #2ecc71;
+    color: white;
+    padding: 0.25rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+}
+
+.model-perf h4 {
+    margin-bottom: 1rem;
+    color: #2c3e50;
+}
+
+.model-perf.featured h4 {
+    color: white;
+}
+
+.model-perf p {
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.timeline {
+    position: relative;
+    padding-left: 3rem;
+    margin-top: 1.5rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #3498db;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 2rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -3rem;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #3498db;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.timeline-content h4 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+}
+
+.timeline-content p {
+    color: #666;
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}
