@@ -1,0 +1,79 @@
+Dear Interns,
+
+As we are entering the final week of the Infosys Springboard Internship – Batch 11, this phase is extremely critical. Please read the instructions below carefully and ensure strict compliance with all points.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+
+Final Milestones – Immediate Priority
+━━━━━━━━━━━━━━━━━━━━━━━
+• All 4 milestones must be completed on or before 20th February (no extensions).
+• Students on exam leave who have shown good participation may be considered, with scores adjusted up to a maximum of 75.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+2. Attendance – Mandatory Requirement
+━━━━━━━━━━━━━━━━━━━━━━━
+• Attendance must be at least 70% to be eligible for certification.
+• All attendance and milestone data will be frozen on 20th February (hard stop).
+
+Students below 70% attendance will receive individual communication. Ensure disciplined participation during this final week.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+3. GitHub Submission (Compulsory)
+━━━━━━━━━━━━━━━━━━━━━━━
+• GitHub repository link must be submitted by 20th February.
+• Code must be maintained across multiple branches.
+
+Entire folder of codes including frontend,backend ,and other things & PPT(check the attachment below).
+
+These are mandatory ,don't bother about the milestones 1,2,3 if you aren't able to do it.
+
+But these are necessary 
+
+━━━━━━━━━━━━━━━━━━━━━━━
+4. Demo Rehearsals (From 23rd February)
+━━━━━━━━━━━━━━━━━━━━━━━
+• Demo rehearsal slots and meeting links will be shared shortly.
+• Attendance is strongly encouraged for all interns.
+• This final week should focus only on presentation polishing and demo readiness.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+5. Final Project Presentation (Infosys SMEs)
+━━━━━━━━━━━━━━━━━━━━━━━
+• Only 3–5 exceptional performers will be selected to present.
+• Presentation must be done in teams of 3–5 members (no individual presentations).
+• Each member must present a specific part of the project.
+• No rescheduling will be allowed.
+• Backup presenters must be ready in case of technical issues.
+• Only single screen sharing is allowed.
+
+Presentation Structure (Strict 15 Minutes):
+• 5 mins – PPT Overview
+• 5 mins – Live Demo (run beforehand; no code walkthrough)
+• 5 mins – Q&A
+
+Evaluation Focus:
+• Technical depth
+• Innovation
+• Clarity of explanation
+• Avoid repetition and lengthy acknowledgements
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Technical Readiness
+━━━━━━━━━━━━━━━━━━━━━━━
+• Stable internet connection is mandatory.
+• Devices must be fully functional.
+• Join sessions well in advance.
+
+━━━━━━━━━━━━━━━━━━━━━━━
+Certification Eligibility
+━━━━━━━━━━━━━━━━━━━━━━━
+• Minimum 70% overall performance (attendance + milestones) is required to receive the certificate.
+• This final week is crucial for ensuring your eligibility.
+
+Please treat this as a high priority. Your dedication and seriousness in this final phase will directly impact your certification and overall evaluation.
+
+Let us finish strong and deliver quality work.
+
+Best regards,
+Priya
+Mentor – Infosys Springboard Internship

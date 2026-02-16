@@ -1,0 +1,32 @@
+Dear Interns,
+
+Please treat the shared colab link as the main reference project document. It is well-structured and clearly written, so make sure to carefully go through it and follow the same approach while refining your work.
+
+Colab Link: 
+
+https://colab.research.google.com/drive/1swP-N6rGvqOnWBXT55unLexdN7fk3Wl8?usp=sharing
+
+If anything is missing in your current implementation, update it accordingly. Consolidate everything into one complete Google Colab notebook that includes all work starting from Milestone 1 up to the current stage.
+
+Once completed:
+
+Ensure the notebook is properly structured and clean.
+
+Push the final consolidated notebook to your main branch.
+
+Upload the corresponding documentation as well.
+
+Make sure the project includes complete front-end, back-end, and overall integration.
+
+As per the dashboard requirements, include all relevant visualizations clearly.
+
+You should be prepared to showcase your entire project end-to-end, including implementation and deployment aspects if applicable.
+
+Please ensure you follow these instructions carefully in all future submissions as well.
+
+That’s all for now.
+
+Thank you.
+
+Regards,
+Priya

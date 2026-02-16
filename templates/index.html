@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Energy Dashboard | AI-Powered Analysis</title>
+    <meta name="description" content="AI/ML-driven smart energy consumption analysis and forecasting dashboard with device-level insights">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- ─── Header ──────────────────────────────────────────────────── -->
+    <header class="header">
+        <div class="header-left">
+            <div class="logo">
+                <span class="logo-icon">⚡</span>
+                <div>
+                    <h1>Smart Energy Dashboard</h1>
+                    <p class="subtitle">AI/ML-Driven Analysis & Forecasting</p>
+                </div>
+            </div>
+        </div>
+        <div class="header-right">
+            <div class="badge badge-success">
+                <span class="pulse-dot"></span> Model Active
+            </div>
+            <div class="clock" id="clock"></div>
+        </div>
+    </header>
+
+    <!-- ─── Navigation ──────────────────────────────────────────────── -->
+    <nav class="nav-tabs">
+        <button class="nav-btn active" data-section="overview" onclick="showSection('overview')">
+            📊 Overview
+        </button>
+        <button class="nav-btn" data-section="devices" onclick="showSection('devices')">
+            🏠 Devices
+        </button>
+        <button class="nav-btn" data-section="predictions" onclick="showSection('predictions')">
+            🧠 Predictions
+        </button>
+        <button class="nav-btn" data-section="comparison" onclick="showSection('comparison')">
+            📈 Model Comparison
+        </button>
+        <button class="nav-btn" data-section="suggestions" onclick="showSection('suggestions')">
+            💡 Smart Suggestions
+        </button>
+        <button class="nav-btn" data-section="visualizations" onclick="showSection('visualizations')">
+            🖼️ Visualizations
+        </button>
+    </nav>
+
+    <main class="main-content">
+
+        <!-- ═══ Overview Section ══════════════════════════════════════ -->
+        <section id="section-overview" class="section active">
+            <div class="stats-grid" id="stats-cards">
+                <div class="stat-card stat-card-gradient-1">
+                    <div class="stat-icon">📊</div>
+                    <div class="stat-value" id="stat-records">--</div>
+                    <div class="stat-label">Total Records</div>
+                </div>
+                <div class="stat-card stat-card-gradient-2">
+                    <div class="stat-icon">⚡</div>
+                    <div class="stat-value" id="stat-avg-power">--</div>
+                    <div class="stat-label">Avg Power (kW)</div>
+                </div>
+                <div class="stat-card stat-card-gradient-3">
+                    <div class="stat-icon">🎯</div>
+                    <div class="stat-value" id="stat-accuracy">--</div>
+                    <div class="stat-label">LSTM Accuracy</div>
+                </div>
+                <div class="stat-card stat-card-gradient-4">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value" id="stat-monthly-cost">--</div>
+                    <div class="stat-label">Monthly Cost Est.</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="card chart-card-wide">
+                    <div class="card-header">
+                        <h3>Global Active Power Trend</h3>
+                        <div class="period-selector">
+                            <button class="period-btn active" onclick="loadTrend('hourly')">Hourly</button>
+                            <button class="period-btn" onclick="loadTrend('daily')">Daily</button>
+                            <button class="period-btn" onclick="loadTrend('weekly')">Weekly</button>
+                            <button class="period-btn" onclick="loadTrend('monthly')">Monthly</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>24-Hour Consumption Pattern</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="hourlyPatternChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Devices Section ═══════════════════════════════════════ -->
+        <section id="section-devices" class="section">
+            <div class="device-stats-grid" id="device-stats-cards"></div>
+
+            <div class="chart-grid">
+                <div class="card chart-card-wide">
+                    <div class="card-header">
+                        <h3>Device-Level Consumption</h3>
+                        <div class="period-selector">
+                            <button class="period-btn active" onclick="loadDeviceChart('hourly')">Hourly</button>
+                            <button class="period-btn" onclick="loadDeviceChart('daily')">Daily</button>
+                            <button class="period-btn" onclick="loadDeviceChart('weekly')">Weekly</button>
+                            <button class="period-btn" onclick="loadDeviceChart('monthly')">Monthly</button>
+                        </div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="deviceChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Device Consumption Share</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="devicePieChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Predictions Section ═══════════════════════════════════ -->
+        <section id="section-predictions" class="section">
+            <div class="stats-grid stats-grid-3" id="prediction-metrics"></div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>LSTM Predictions vs Actual Values</h3>
+                </div>
+                <div class="chart-wrapper chart-wrapper-tall">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Prediction Error Distribution</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="errorDistChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Model Performance Summary</h3>
+                    </div>
+                    <div id="metrics-table" class="metrics-table-wrapper"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Model Comparison Section ══════════════════════════════ -->
+        <section id="section-comparison" class="section">
+            <div class="comparison-header">
+                <div class="card model-card model-card-baseline" id="baseline-card"></div>
+                <div class="vs-badge">VS</div>
+                <div class="card model-card model-card-lstm" id="lstm-card"></div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Metric Comparison</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="comparisonBarChart"></canvas>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Improvement Over Baseline</h3>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="improvementChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" id="feature-importance-section">
+                <div class="card-header">
+                    <h3>Top Feature Importance (Linear Regression)</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="featureImportanceChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ═══ Smart Suggestions Section ═════════════════════════════ -->
+        <section id="section-suggestions" class="section">
+            <div class="suggestions-header">
+                <div class="card cost-summary-card" id="cost-summary"></div>
+            </div>
+            <div class="suggestions-grid" id="suggestions-grid"></div>
+            <div class="card anomaly-section" id="anomaly-section" style="display:none;">
+                <div class="card-header">
+                    <h3>🚨 Detected Anomalies</h3>
+                </div>
+                <div id="anomaly-list"></div>
+            </div>
+        </section>
+
+        <!-- ═══ Visualizations Section ════════════════════════════════ -->
+        <section id="section-visualizations" class="section">
+            <div class="viz-gallery" id="viz-gallery"></div>
+        </section>
+
+    </main>
+
+    <!-- ─── Footer ──────────────────────────────────────────────────── -->
+    <footer class="footer">
+        <p>Smart Energy Consumption Analysis System • Infosys Springboard Internship • 2026</p>
+        <p class="footer-sub">Built with Python, Flask, TensorFlow/Keras, Chart.js</p>
+    </footer>
+
+    <script src="/static/js/dashboard.js"></script>
+</body>
+</html>

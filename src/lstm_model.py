@@ -27,14 +27,25 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 PROCESSED_DIR = r'c:\Suraj\My_files\Career\Infosys Spring Board\Project\processed_data'
 VIZ_DIR = r'c:\Suraj\My_files\Career\Infosys Spring Board\Project\visualizations'
 MODELS_DIR = r'c:\Suraj\My_files\Career\Infosys Spring Board\Project\models'
-INPUT_FILE = os.path.join(PROCESSED_DIR, 'data_hourly.csv')
+INPUT_FILE = os.path.join(PROCESSED_DIR, 'data_features.csv')
 
-SEQUENCE_LENGTH = 24
-BATCH_SIZE = 32
-EPOCHS = 50
-LEARNING_RATE = 0.0005  # Reduced learning rate
+SEQUENCE_LENGTH = 48   # 48 hours look-back for richer context
+BATCH_SIZE = 64
+EPOCHS = 80
+LEARNING_RATE = 0.001
 TARGET_COL = 'Global_active_power'
-FEATURE_COLS = [TARGET_COL, 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
+
+# Use the same feature set as the baseline model (no leaky features)
+FEATURE_COLS = [
+    TARGET_COL,
+    'hour', 'day', 'month', 'dayofweek', 'quarter', 'is_weekend',
+    'year', 'week_of_year', 'day_of_month', 'day_of_year',
+    'is_month_start', 'is_month_end',
+    'hour_sin', 'hour_cos', 'month_sin', 'month_cos',
+    'dayofweek_sin', 'dayofweek_cos',
+    'total_submetering', 'kitchen_ratio', 'laundry_ratio', 'hvac_ratio',
+    'dominant_device'
+]
 
 plt.style.use('seaborn-v0_8-darkgrid')
 sns.set_palette("husl")
@@ -45,12 +56,9 @@ def load_data():
     print("=" * 80)
     print("MILESTONE 3 - LSTM MODEL DEVELOPMENT")
     print("=" * 80)
-    print("\n[INFO] Loading Data...")
-    df = pd.read_csv(INPUT_FILE)
-    if 'Datetime' in df.columns:
-        df['Datetime'] = pd.to_datetime(df['Datetime'])
-        df.set_index('Datetime', inplace=True)
-    print(f"   [OK] Loaded {len(df):,} records")
+    print("\n[INFO] Loading Feature-Engineered Data...")
+    df = pd.read_csv(INPUT_FILE, index_col=0, parse_dates=True)
+    print(f"   [OK] Loaded {len(df):,} records, {len(df.columns)} columns")
     return df
 
 
@@ -67,18 +75,23 @@ def prepare_data(df):
     
     # Select only numeric columns that exist
     available_cols = [col for col in FEATURE_COLS if col in df.columns]
+    missing = [col for col in FEATURE_COLS if col not in df.columns]
+    if missing:
+        print(f"   [WARN] Missing columns: {missing}")
+    print(f"   Using {len(available_cols)} features: {available_cols[:5]}...")
+    
     data = df[available_cols].values
     
     # Handle NaN and inf values BEFORE scaling
     print("   Cleaning NaN/Inf values...")
     data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
     
-    # Clip extreme values
+    # Use RobustScaler approach: clip only at 0.5%-99.5% for less data loss
     for i in range(data.shape[1]):
-        p1, p99 = np.percentile(data[:, i], [1, 99])
-        data[:, i] = np.clip(data[:, i], p1, p99)
+        p_low, p_high = np.percentile(data[:, i], [0.5, 99.5])
+        data[:, i] = np.clip(data[:, i], p_low, p_high)
     
-    scaler = MinMaxScaler(feature_range=(0.01, 0.99))  # Avoid exact 0 and 1
+    scaler = MinMaxScaler(feature_range=(0.0, 1.0))
     data_scaled = scaler.fit_transform(data)
     joblib.dump(scaler, os.path.join(MODELS_DIR, 'lstm_scaler.pkl'))
     
@@ -103,23 +116,20 @@ def prepare_data(df):
 
 
 def build_lstm_model(input_shape):
-    print("\n[BUILD] Building LSTM Architecture (128-64-32)...")
+    print(f"\n[BUILD] Building LSTM Architecture (128-64-32) with input shape {input_shape}...")
     model = Sequential([
-        LSTM(128, activation='tanh', input_shape=input_shape, return_sequences=True,
-             kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-        Dropout(0.3),
-        LSTM(64, activation='tanh', return_sequences=True,
-             kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-        Dropout(0.3),
-        LSTM(32, activation='tanh', return_sequences=False,
-             kernel_regularizer=tf.keras.regularizers.l2(0.001)),
-        Dropout(0.3),
+        LSTM(128, activation='tanh', input_shape=input_shape, return_sequences=True),
+        Dropout(0.15),
+        LSTM(64, activation='tanh', return_sequences=True),
+        Dropout(0.15),
+        LSTM(32, activation='tanh', return_sequences=False),
+        Dropout(0.1),
+        Dense(32, activation='relu'),
         Dense(16, activation='relu'),
         Dense(1)
     ])
-    # Use gradient clipping to prevent exploding gradients
     optimizer = Adam(learning_rate=LEARNING_RATE, clipnorm=1.0)
-    model.compile(optimizer=optimizer, loss='mse', metrics=['mae'])
+    model.compile(optimizer=optimizer, loss='huber', metrics=['mae'])
     model.summary()
     return model
 
@@ -127,9 +137,11 @@ def build_lstm_model(input_shape):
 def train_model(model, X_train, y_train, X_val, y_val):
     print("\n[TRAIN] Training LSTM...")
     callbacks = [
-        EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True, verbose=1),
+        EarlyStopping(monitor='val_loss', patience=15, restore_best_weights=True, verbose=1),
         ModelCheckpoint(os.path.join(MODELS_DIR, 'lstm_best_model.keras'), 
-                       monitor='val_loss', save_best_only=True, verbose=1)
+                       monitor='val_loss', save_best_only=True, verbose=1),
+        tf.keras.callbacks.ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5, 
+                                             min_lr=1e-6, verbose=1)
     ]
     history = model.fit(X_train, y_train, epochs=EPOCHS, batch_size=BATCH_SIZE,
                        validation_data=(X_val, y_val), callbacks=callbacks, verbose=1)
@@ -207,13 +219,14 @@ def generate_lstm_viz(history, y_test, y_pred, metrics):
     ax3 = fig.add_subplot(gs[0, 2])
     ax3.axis('off')
     arch_text = 'LSTM Architecture:\n\n'
-    arch_text += 'Layer 1: LSTM 128 + Dropout 0.3\n'
-    arch_text += 'Layer 2: LSTM 64 + Dropout 0.3\n'
-    arch_text += 'Layer 3: LSTM 32 + Dropout 0.3\n'
-    arch_text += 'Dense: 16 -> 1\n\n'
+    arch_text += 'Layer 1: LSTM 128 + Dropout 0.15\n'
+    arch_text += 'Layer 2: LSTM 64 + Dropout 0.15\n'
+    arch_text += 'Layer 3: LSTM 32 + Dropout 0.1\n'
+    arch_text += 'Dense: 32 -> 16 -> 1\n\n'
     arch_text += f'Optimizer: Adam (lr={LEARNING_RATE})\n'
-    arch_text += 'Gradient Clipping: clipnorm=1.0'
-    ax3.text(0.1, 0.5, arch_text, fontsize=11, fontweight='bold', va='center', 
+    arch_text += f'Features: {len(FEATURE_COLS)}\n'
+    arch_text += f'Sequence: {SEQUENCE_LENGTH}h look-back'
+    ax3.text(0.1, 0.5, arch_text, fontsize=10, fontweight='bold', va='center', 
              family='monospace', bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
     ax3.set_title('Architecture', fontweight='bold')
     
@@ -287,8 +300,8 @@ def generate_lstm_viz(history, y_test, y_pred, metrics):
 
 def generate_comparison_viz(lstm_metrics):
     print("\n[VIZ] Generating Model Comparison...")
-    # Estimated baseline metrics (from typical LR on this dataset)
-    baseline = {'MAE': 0.35, 'RMSE': 0.45, 'R2': 0.75, 'MAPE': 25.0}
+    # Actual baseline metrics computed from saved Linear Regression model on test set
+    baseline = {'MAE': 0.2140, 'RMSE': 0.3067, 'R2': 0.8093, 'MAPE': 28.39}
     
     fig = plt.figure(figsize=(16, 10))
     fig.suptitle('MODEL COMPARISON: LINEAR REGRESSION vs LSTM', fontsize=18, fontweight='bold', y=0.98)
