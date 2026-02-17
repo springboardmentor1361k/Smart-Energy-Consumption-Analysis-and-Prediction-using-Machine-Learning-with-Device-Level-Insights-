@@ -1,7 +1,6 @@
 """
-Flask Prediction Module
-Handles energy consumption predictions
-Matches the actual SMARTENERGYML project structure
+Flask Prediction Module - FINAL VERSION
+Handles energy consumption predictions with new model format
 """
 
 import numpy as np
@@ -11,8 +10,10 @@ import os
 import traceback
 
 try:
+    import tensorflow as tf
     from tensorflow import keras
     TENSORFLOW_AVAILABLE = True
+    print(f"TensorFlow version: {tf.__version__}")
 except ImportError:
     TENSORFLOW_AVAILABLE = False
     print("WARNING: TensorFlow not available")
@@ -20,7 +21,7 @@ except ImportError:
 
 def load_selected_features():
     """Load the exact feature list used during training"""
-    feature_file = 'C:/Users/battu/Documents/SmartEnergyML/data/processed/lstm_selected_features.txt'
+    feature_file = 'data/processed/lstm_selected_features.txt'
     
     if os.path.exists(feature_file):
         with open(feature_file, 'r') as f:
@@ -33,45 +34,53 @@ def load_selected_features():
 
 
 def create_features(df):
-    """
-    Create all engineered features
-    """
+    """Create all engineered features"""
     df = df.copy()
     
-    # Ensure datetime index
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index)
     
-    # 1. Lag features
-    for lag in [1, 12, 24]:
+    # Lag features
+    for lag in [1, 2, 3, 6, 12, 24, 48, 168]:
         df[f'Global_active_power_lag_{lag}h'] = df['Global_active_power'].shift(lag)
     
-    # 2. Difference features
+    # Difference features
     df['Global_active_power_diff_1h'] = df['Global_active_power'].diff(1)
     df['Global_active_power_diff_24h'] = df['Global_active_power'].diff(24)
     
-    # 3. Rolling statistics
-    for window in [12, 24]:
+    # Rolling statistics
+    for window in [6, 24, 168]:
         df[f'Global_active_power_rolling_mean_{window}h'] = df['Global_active_power'].rolling(window=window, min_periods=1).mean()
-        df[f'Global_active_power_rolling_std_{window}h'] = df['Global_active_power'].rolling(window=window, min_periods=1).std()
     
-    # 4. Exponential Moving Average
-    for span in [12, 24]:
-        df[f'Global_active_power_ema_{span}h'] = df['Global_active_power'].ewm(span=span, adjust=False).mean()
+    df['Global_active_power_rolling_std_24h'] = df['Global_active_power'].rolling(window=24, min_periods=1).std()
     
-    # 5. Time-based features
+    # Exponential Moving Average
+    df['Global_active_power_ema_24h'] = df['Global_active_power'].ewm(span=24, adjust=False).mean()
+    
+    # Momentum
+    df['Global_active_power_momentum_24h'] = df['Global_active_power'] - df['Global_active_power'].shift(24)
+    
+    # Time-based features
     df['hour'] = df.index.hour
-    df['day_of_week'] = df.index.dayofweek
+    df['dayofweek'] = df.index.dayofweek
     df['month'] = df.index.month
     df['is_weekend'] = (df.index.dayofweek >= 5).astype(int)
     
-    # 6. Cyclical encoding
+    # Season
+    df['season'] = df.index.month % 12 // 3 + 1
+    
+    # Cyclical encoding
     df['hour_sin'] = np.sin(2 * np.pi * df['hour'] / 24)
     df['hour_cos'] = np.cos(2 * np.pi * df['hour'] / 24)
-    df['day_sin'] = np.sin(2 * np.pi * df['day_of_week'] / 7)
-    df['day_cos'] = np.cos(2 * np.pi * df['day_of_week'] / 7)
     df['month_sin'] = np.sin(2 * np.pi * df['month'] / 12)
     df['month_cos'] = np.cos(2 * np.pi * df['month'] / 12)
+    
+    # Sub-metering features
+    if 'Sub_metering_1' in df.columns:
+        df['total_sub_metering'] = df['Sub_metering_1'] + df['Sub_metering_2'] + df['Sub_metering_3']
+        df['Sub_metering_1_lag_24h'] = df['Sub_metering_1'].shift(24)
+        df['Sub_metering_2_lag_24h'] = df['Sub_metering_2'].shift(24)
+        df['Sub_metering_3_lag_24h'] = df['Sub_metering_3'].shift(24)
     
     # Fill NaN values
     df = df.fillna(method='bfill').fillna(method='ffill').fillna(0)
@@ -107,9 +116,7 @@ def predict_fallback(input_data):
 
 
 def predict(input_data):
-    """
-    Make predictions using the trained LSTM model
-    """
+    """Make predictions using the trained LSTM model"""
     
     try:
         print("="*60)
@@ -130,67 +137,78 @@ def predict(input_data):
         current_power = float(input_data['Global_active_power'].iloc[-1])
         print(f"Current power: {current_power:.3f} kW")
         
-        # Load model with correct path
-        model_path = 'C:/Users/battu/Documents/SmartEnergyML/data/processed/lstm_energy_prediction_model.h5'
+        # UPDATED: Load new model format
+        model_path = 'data/processed/lstm_model_new.keras'
+        
+        # Fallback to old model if new one doesn't exist
+        if not os.path.exists(model_path):
+            print(f"New model not found, trying old format...")
+            model_path = 'data/processed/lstm_energy_prediction_model.h5'
+        
         if not os.path.exists(model_path):
             print(f"Model not found at {model_path}")
             return predict_fallback(input_data)
         
         print(f"Loading model from: {model_path}")
-        model = keras.models.load_model(model_path)
-        print("Model loaded successfully")
+        
+        # Load model
+        try:
+            model = keras.models.load_model(model_path, compile=False)
+            print("✓ Model loaded successfully!")
+        except Exception as e:
+            print(f"✗ Failed to load model: {str(e)[:100]}")
+            return predict_fallback(input_data)
         
         # Load scalers
-        feature_scaler_path = 'C:/Users/battu/Documents/SmartEnergyML/data/processed/lstm_feature_scaler.pkl'
-        target_scaler_path = 'C:/Users/battu/Documents/SmartEnergyML/data/processed/lstm_target_scaler.pkl'
+        feature_scaler_path = 'data/processed/lstm_feature_scaler.pkl'
+        target_scaler_path = 'data/processed/lstm_target_scaler.pkl'
         
         feature_scaler = None
         target_scaler = None
         
         if os.path.exists(feature_scaler_path):
             feature_scaler = joblib.load(feature_scaler_path)
-            print("Feature scaler loaded")
+            print("✓ Feature scaler loaded")
         
         if os.path.exists(target_scaler_path):
             target_scaler = joblib.load(target_scaler_path)
-            print("Target scaler loaded")
+            print("✓ Target scaler loaded")
         
         # Create features
         print("Creating features...")
         df_features = create_features(input_data)
         
-        # Load the exact features used during training
+        # Load selected features
         selected_features = load_selected_features()
         
         if selected_features is None:
-            print("Using default feature set")
-            # Default feature set if file not found
+            print("Feature list not found, using model input")
+            # Based on your notebook - 29 features
             selected_features = [
-                'Global_active_power',
-                'Sub_metering_1',
-                'Sub_metering_2', 
-                'Sub_metering_3',
                 'Global_active_power_lag_1h',
+                'Global_active_power_lag_2h',
+                'Global_active_power_lag_3h',
+                'Global_active_power_lag_6h',
                 'Global_active_power_lag_12h',
                 'Global_active_power_lag_24h',
+                'Global_active_power_lag_48h',
+                'Global_active_power_lag_168h',
+                'Global_active_power_rolling_mean_6h',
+                'Global_active_power_rolling_mean_24h',
+                'Global_active_power_rolling_mean_168h',
+                'Global_active_power_rolling_std_24h',
+                'hour', 'hour_sin', 'hour_cos',
+                'dayofweek', 'is_weekend',
+                'month', 'month_sin', 'month_cos',
+                'season',
+                'total_sub_metering',
+                'Sub_metering_1_lag_24h',
+                'Sub_metering_2_lag_24h',
+                'Sub_metering_3_lag_24h',
                 'Global_active_power_diff_1h',
                 'Global_active_power_diff_24h',
-                'Global_active_power_rolling_mean_12h',
-                'Global_active_power_rolling_std_12h',
-                'Global_active_power_rolling_mean_24h',
-                'Global_active_power_rolling_std_24h',
-                'Global_active_power_ema_12h',
                 'Global_active_power_ema_24h',
-                'hour',
-                'day_of_week',
-                'month',
-                'is_weekend',
-                'hour_sin',
-                'hour_cos',
-                'day_sin',
-                'day_cos',
-                'month_sin',
-                'month_cos'
+                'Global_active_power_momentum_24h',
             ]
         
         # Check for missing features
@@ -198,14 +216,13 @@ def predict(input_data):
         missing_features = [f for f in selected_features if f not in df_features.columns]
         
         if missing_features:
-            print(f"WARNING: Missing features: {missing_features}")
-            if len(available_features) < len(selected_features) * 0.8:  # If more than 20% missing
+            print(f"WARNING: Missing {len(missing_features)} features: {missing_features[:5]}...")
+            if len(available_features) < len(selected_features) * 0.8:
                 print("Too many features missing, using fallback")
                 return predict_fallback(input_data)
-            # Use only available features
             selected_features = available_features
         
-        print(f"Using {len(selected_features)} features")
+        print(f"✓ Using {len(selected_features)} features")
         
         # Prepare data
         X = df_features[selected_features].values
@@ -213,19 +230,18 @@ def predict(input_data):
         # Scale features
         if feature_scaler is not None:
             X = feature_scaler.transform(X)
-            print("Features scaled")
+            print("✓ Features scaled")
         
         # Prepare sequence for LSTM (last 24 hours)
         sequence_length = 24
         if len(X) >= sequence_length:
             X_seq = X[-sequence_length:].reshape(1, sequence_length, len(selected_features))
         else:
-            # Pad if not enough data
             padding = np.zeros((sequence_length - len(X), len(selected_features)))
             X_padded = np.vstack([padding, X])
             X_seq = X_padded.reshape(1, sequence_length, len(selected_features))
         
-        print(f"Input shape for LSTM: {X_seq.shape}")
+        print(f"✓ Input shape: {X_seq.shape}")
         
         # Make prediction
         print("Making prediction...")
@@ -235,11 +251,11 @@ def predict(input_data):
         if target_scaler is not None:
             prediction = target_scaler.inverse_transform(prediction_scaled)
             predicted_power = float(prediction[0][0])
-            print("Prediction inverse-transformed")
+            print("✓ Prediction inverse-transformed")
         else:
             predicted_power = float(prediction_scaled[0][0])
         
-        print(f"Predicted power: {predicted_power:.3f} kW")
+        print(f"✓ Predicted power: {predicted_power:.3f} kW")
         
         # Calculate statistics
         change = predicted_power - current_power
@@ -257,7 +273,7 @@ def predict(input_data):
         }
         
         print("="*60)
-        print("PREDICTION COMPLETED")
+        print("PREDICTION COMPLETED SUCCESSFULLY")
         print(f"Result: {result}")
         print("="*60)
         
@@ -287,12 +303,9 @@ def predict(input_data):
 
 
 def predict_simple(hours_ahead=1):
-    """
-    Load data and make prediction
-    """
+    """Load data and make prediction"""
     try:
-        # Load data from correct path
-        data_path = 'C:/Users/battu/Documents/SmartEnergyML/data/processed/data_hourly.csv'
+        data_path = 'data/processed/data_hourly.csv'
         
         if not os.path.exists(data_path):
             return {
@@ -308,8 +321,8 @@ def predict_simple(hours_ahead=1):
         df = pd.read_csv(data_path, index_col='Datetime', parse_dates=True)
         print(f"Data loaded: {df.shape}")
         
-        # Use last 48 hours (enough for all lag features)
-        input_data = df.tail(48)
+        # Use last 200 hours (enough for all lag features)
+        input_data = df.tail(200)
         
         # Make prediction
         result = predict(input_data)
