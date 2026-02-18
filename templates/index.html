@@ -1,15 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Energy Dashboard | AI-Powered Analysis</title>
-    <meta name="description" content="AI/ML-driven smart energy consumption analysis and forecasting dashboard with device-level insights">
+    <meta name="description"
+        content="AI/ML-driven smart energy consumption analysis and forecasting dashboard with device-level insights">
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="/static/css/style.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </head>
+
 <body>
     <!-- ─── Header ──────────────────────────────────────────────────── -->
     <header class="header">
@@ -23,6 +27,9 @@
             </div>
         </div>
         <div class="header-right">
+            <a href="/predict" class="badge badge-predict" style="text-decoration:none; cursor:pointer;">
+                🔮 Predict Energy
+            </a>
             <div class="badge badge-success">
                 <span class="pulse-dot"></span> Model Active
             </div>
@@ -233,4 +240,5 @@
 
     <script src="/static/js/dashboard.js"></script>
 </body>
+
 </html>

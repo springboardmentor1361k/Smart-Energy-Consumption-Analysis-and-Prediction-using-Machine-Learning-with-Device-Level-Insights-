@@ -86,16 +86,26 @@ def prepare_data(df):
     print("   Cleaning NaN/Inf values...")
     data = np.nan_to_num(data, nan=0.0, posinf=0.0, neginf=0.0)
     
-    # Use RobustScaler approach: clip only at 0.5%-99.5% for less data loss
-    for i in range(data.shape[1]):
-        p_low, p_high = np.percentile(data[:, i], [0.5, 99.5])
+    # Widen clipping to 0.1-99.9% for FEATURE columns only (skip target col 0)
+    # This preserves the full target range while reducing extreme feature outliers
+    for i in range(1, data.shape[1]):  # Start from 1 to skip target column
+        p_low, p_high = np.percentile(data[:, i], [0.1, 99.9])
         data[:, i] = np.clip(data[:, i], p_low, p_high)
+    print(f"   Target range preserved: [{data[:, 0].min():.4f}, {data[:, 0].max():.4f}]")
     
+    # Use a SEPARATE scaler for the target column to avoid inverse-transform contamination
+    target_scaler = MinMaxScaler(feature_range=(0.0, 1.0))
+    target_scaled = target_scaler.fit_transform(data[:, 0].reshape(-1, 1)).flatten()
+    joblib.dump(target_scaler, os.path.join(MODELS_DIR, 'lstm_target_scaler.pkl'))
+    print(f"   Target scaler range: [{target_scaler.data_min_[0]:.4f}, {target_scaler.data_max_[0]:.4f}]")
+    
+    # Scale all features together (including target, for the input sequences)
     scaler = MinMaxScaler(feature_range=(0.0, 1.0))
     data_scaled = scaler.fit_transform(data)
     joblib.dump(scaler, os.path.join(MODELS_DIR, 'lstm_scaler.pkl'))
     
-    X, y = create_sequences(data_scaled, data_scaled[:, 0], SEQUENCE_LENGTH)
+    # Use full-feature scaled data for input X, but dedicated target-scaled values for y
+    X, y = create_sequences(data_scaled, target_scaled, SEQUENCE_LENGTH)
     print(f"   Input shape: {X.shape}, Target shape: {y.shape}")
     
     # Verify no NaN in sequences
@@ -112,7 +122,7 @@ def prepare_data(df):
     X_test, y_test = X[train_size+val_size:], y[train_size+val_size:]
     
     print(f"   Train: {len(X_train)}, Val: {len(X_val)}, Test: {len(X_test)}")
-    return X_train, y_train, X_val, y_val, X_test, y_test, scaler, len(available_cols)
+    return X_train, y_train, X_val, y_val, X_test, y_test, scaler, target_scaler, len(available_cols)
 
 
 def build_lstm_model(input_shape):
@@ -150,20 +160,16 @@ def train_model(model, X_train, y_train, X_val, y_val):
     return history
 
 
-def evaluate_model(model, X_test, y_test, scaler, n_features):
+def evaluate_model(model, X_test, y_test, scaler, target_scaler, n_features):
     print("\n[EVAL] Evaluating LSTM...")
     y_pred_scaled = model.predict(X_test, verbose=0)
     
     # Handle NaN in predictions
     y_pred_scaled = np.nan_to_num(y_pred_scaled, nan=0.5)
     
-    def inverse_target(y_scaled):
-        dummy = np.zeros((len(y_scaled), n_features))
-        dummy[:, 0] = y_scaled.flatten()
-        return scaler.inverse_transform(dummy)[:, 0]
-    
-    y_pred = inverse_target(y_pred_scaled)
-    y_test_inv = inverse_target(y_test)
+    # Use the DEDICATED target scaler for clean inverse transform
+    y_pred = target_scaler.inverse_transform(y_pred_scaled.reshape(-1, 1)).flatten()
+    y_test_inv = target_scaler.inverse_transform(y_test.reshape(-1, 1)).flatten()
     
     # Handle any remaining NaN
     y_pred = np.nan_to_num(y_pred, nan=np.nanmean(y_pred) if not np.all(np.isnan(y_pred)) else 0)
@@ -395,11 +401,11 @@ def main():
         return None
     
     df = load_data()
-    X_train, y_train, X_val, y_val, X_test, y_test, scaler, n_features = prepare_data(df)
+    X_train, y_train, X_val, y_val, X_test, y_test, scaler, target_scaler, n_features = prepare_data(df)
     
     model = build_lstm_model((X_train.shape[1], X_train.shape[2]))
     history = train_model(model, X_train, y_train, X_val, y_val)
-    y_test_inv, y_pred, metrics = evaluate_model(model, X_test, y_test, scaler, n_features)
+    y_test_inv, y_pred, metrics = evaluate_model(model, X_test, y_test, scaler, target_scaler, n_features)
     
     generate_lstm_viz(history, y_test_inv, y_pred, metrics)
     generate_comparison_viz(metrics)
