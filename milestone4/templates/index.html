@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Energy Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1><span class="highlight">Smart</span> Energy Analysis</h1>
+            <p>Real-time device insights and predictive monitoring</p>
+        </header>
+
+        <main>
+            <div class="grid-container">
+                <!-- Current status card -->
+                <div class="card stat-card" id="prediction-card">
+                    <h3>Future Prediction</h3>
+                    <div class="prediction-value" id="prediction-text">Loading...</div>
+                    <p class="model-info" id="model-text"></p>
+                </div>
+
+                <!-- Suggestions card -->
+                <div class="card" id="suggestions-card">
+                    <h3>Smart Suggestions</h3>
+                    <div id="suggestions-list" class="scrollable">
+                        <p>Analyzing patterns...</p>
+                    </div>
+                </div>
+
+                <!-- Trend Analytics -->
+                <div class="card full-width">
+                    <div class="card-header">
+                        <h3>Dynamic Consumption Trends</h3>
+                        <div class="tab-group">
+                            <button class="tab-btn active" onclick="changeTrend('hourly')">Hourly</button>
+                            <button class="tab-btn" onclick="changeTrend('daily')">Daily</button>
+                            <button class="tab-btn" onclick="changeTrend('weekly')">Weekly</button>
+                        </div>
+                    </div>
+                    <div class="chart-container-large">
+                        <canvas id="trendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Live Chart -->
+                <div class="card full-width">
+                    <h3>Model Performance Comparison</h3>
+                    <div class="chart-container">
+                        <canvas id="comparisonChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Device Breakdown -->
+                <div class="card">
+                    <h3>Live Device Load Distribution</h3>
+                    <canvas id="deviceChart"></canvas>
+                </div>
+
+                <!-- Static Plots Section -->
+                <div class="card">
+                    <h3>Historical Energy Patterns</h3>
+                    <div class="image-gallery">
+                        <div class="image-item">
+                            <img src="{{ url_for('static', filename='plots/consumption_trend.png') }}"
+                                alt="Consumption Trend">
+                            <p class="img-caption">Weekly Trend</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Peak Comparison -->
+                <div class="card full-width">
+                    <h3>Peak vs Non-Peak Analysis</h3>
+                    <img src="{{ url_for('static', filename='plots/peak_comparison.png') }}" alt="Peak Comparison"
+                        style="width:100%; max-height: 300px; object-fit: contain; border-radius: 8px;">
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Smart Energy consumption Analysis System</p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+
+</html>
