@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="prediction-title">
+    <i class="fas fa-brain"></i>
+    Energy Consumption Prediction
+    <i class="fas fa-chart-line"></i>
+</h2>
+
+<div class="prediction-container">
+    <form id="predictionForm">
+        <div class="form-group">
+            <label><i class="fas fa-plug"></i> Appliance:</label>
+            <select id="appliance" class="form-control" required>
+                <option value="" disabled selected>Select an appliance</option>
+                <option>Fridge</option>
+                <option>Oven</option>
+                <option>Dishwasher</option>
+                <option>Heater</option>
+                <option>Microwave</option>
+                <option>Air Conditioning</option>
+                <option>Computer</option>
+                <option>TV</option>
+                <option>Washing Machine</option>
+                <option>Lights</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-clock"></i> Hour (0-23):</label>
+            <input type="number" id="hour" min="0" max="23" class="form-control" required placeholder="e.g., 14">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-thermometer-half"></i> Outdoor Temperature (°C):</label>
+            <input type="number" id="temperature" step="0.1" class="form-control" required placeholder="e.g., 22.5">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-users"></i> Household Size:</label>
+            <input type="number" id="household_size" min="1" class="form-control" required placeholder="e.g., 4">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fas fa-cloud-sun"></i> Season:</label>
+            <select id="season" class="form-control" required>
+                <option value="" disabled selected>Select a season</option>
+                <option>Winter</option>
+                <option>Spring</option>
+                <option>Summer</option>
+                <option>Fall</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn-predict">
+            <i class="fas fa-calculator"></i>
+            Calculate Prediction
+        </button>
+    </form>
+
+    <div id="result" class="prediction-result" style="display: none;"></div>
+</div>
+
+<script>
+document.getElementById("predictionForm").addEventListener("submit", function(e){
+    e.preventDefault();
+    
+    const resultDiv = document.getElementById("result");
+    resultDiv.innerHTML = '<div class="loading"></div>';
+    resultDiv.style.display = 'block';
+
+    fetch("/prediction", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({
+            appliance: document.getElementById("appliance").value,
+            hour: document.getElementById("hour").value,
+            temperature: document.getElementById("temperature").value,
+            household_size: document.getElementById("household_size").value,
+            season: document.getElementById("season").value
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        resultDiv.innerHTML = `
+            <h3><i class="fas fa-chart-line"></i> Linear Prediction: ${data.linear_prediction} kWh</h3>
+            <h3><i class="fas fa-robot"></i> LSTM Prediction: ${data.lstm_prediction} kWh</h3>
+            <h2><i class="fas fa-check-circle"></i> Final Prediction: ${data.final_prediction} kWh</h2>
+            <p><i class="fas fa-lightbulb"></i> <strong>Recommendation:</strong> ${data.recommendation}</p>
+        `;
+    })
+    .catch(error => {
+        resultDiv.innerHTML = `<p style="color: #e74a3b;">Error: Could not get prediction</p>`;
+    });
+});
+</script>
+
+{% endblock %}

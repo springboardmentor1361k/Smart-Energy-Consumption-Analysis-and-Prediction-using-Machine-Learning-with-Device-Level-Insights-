@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="recommendations-header">
+    <h2 class="page-title">
+        <i class="fas fa-leaf"></i> 
+        Energy Saving Recommendations
+    </h2>
+    <p>Personalized tips to help you reduce energy consumption and save money</p>
+</div>
+
+<!-- Dynamic recommendations from backend -->
+<div class="recommendations-grid">
+    {% for rec in recs %}
+        <div class="rec-card">
+            <div class="rec-icon">
+                {% if loop.index % 3 == 0 %}
+                    <i class="fas fa-lightbulb"></i>
+                {% elif loop.index % 3 == 1 %}
+                    <i class="fas fa-temperature-low"></i>
+                {% else %}
+                    <i class="fas fa-solar-panel"></i>
+                {% endif %}
+            </div>
+            <div class="rec-content">
+                <p class="rec-text">{{ rec }}</p>
+                <div class="rec-badge">
+                    <i class="fas fa-coins"></i> Estimated savings
+                </div>
+            </div>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-sun empty-icon"></i>
+            <h3>No recommendations yet</h3>
+            <p>Check back soon for personalized energy-saving tips!</p>
+        </div>
+    {% endfor %}
+</div>
+
+<div class="rec-action">
+    <div class="rec-action-info">
+        <i class="fas fa-robot"></i>
+        <div>
+            <h4>Want more detailed advice?</h4>
+            <p>Our AI assistant can provide personalized recommendations based on your specific needs</p>
+        </div>
+    </div>
+    
+    <a href="http://127.0.0.1:5000/chatbot" class="btn-rec" target="_blank" rel="noopener noreferrer">
+        <span>Click here to get more info</span>
+        <i class="fas fa-arrow-right"></i>
+    </a>
+</div>
+
+{% endblock %}

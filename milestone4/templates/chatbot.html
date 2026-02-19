@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="chatbot-container">
+    <div class="chatbot-header">
+        <h2>
+            <i class="fas fa-robot"></i>
+            Energy Assistant Chatbot
+            <i class="fas fa-comments"></i>
+        </h2>
+    </div>
+
+    <div id="chatBox" class="chat-messages"></div>
+
+    <div class="chat-input-container">
+        <input type="text" id="question" class="chat-input" placeholder="Ask about energy usage, savings tips, or recommendations..." onkeypress="if(event.key === 'Enter') askQuestion()">
+        <button class="btn-chat" onclick="askQuestion()">
+            <i class="fas fa-paper-plane"></i>
+            Send
+        </button>
+    </div>
+</div>
+
+<script>
+function askQuestion() {
+    const questionInput = document.getElementById("question");
+    const question = questionInput.value.trim();
+    
+    if (!question) return;
+
+    const chatBox = document.getElementById("chatBox");
+    
+    // Add user message
+    const userMessageDiv = document.createElement('div');
+    userMessageDiv.className = 'message user';
+    userMessageDiv.innerHTML = `
+        <div class="message-content">${question}</div>
+        <div class="message-time">${new Date().toLocaleTimeString()}</div>
+    `;
+    chatBox.appendChild(userMessageDiv);
+    
+    // Clear input
+    questionInput.value = '';
+
+    // Show typing indicator
+    const typingDiv = document.createElement('div');
+    typingDiv.className = 'message bot';
+    typingDiv.innerHTML = '<div class="message-content"><div class="loading"></div></div>';
+    chatBox.appendChild(typingDiv);
+    chatBox.scrollTop = chatBox.scrollHeight;
+
+    fetch("/chatbot", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({question: question})
+    })
+    .then(res => res.json())
+    .then(data => {
+        // Remove typing indicator
+        chatBox.removeChild(typingDiv);
+        
+        // Add bot response
+        const botMessageDiv = document.createElement('div');
+        botMessageDiv.className = 'message bot';
+        botMessageDiv.innerHTML = `
+            <div class="message-content">${data.answer}</div>
+            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        chatBox.appendChild(botMessageDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    })
+    .catch(error => {
+        chatBox.removeChild(typingDiv);
+        const errorDiv = document.createElement('div');
+        errorDiv.className = 'message bot';
+        errorDiv.innerHTML = `
+            <div class="message-content">Sorry, I'm having trouble connecting. Please try again.</div>
+            <div class="message-time">${new Date().toLocaleTimeString()}</div>
+        `;
+        chatBox.appendChild(errorDiv);
+    });
+}
+
+// Welcome message on page load
+window.onload = function() {
+    const chatBox = document.getElementById("chatBox");
+    const welcomeDiv = document.createElement('div');
+    welcomeDiv.className = 'message bot';
+    welcomeDiv.innerHTML = `
+        <div class="message-content">Hello! 👋 I'm your energy assistant. Ask me anything about energy consumption, saving tips, or how to reduce your electricity bill!</div>
+        <div class="message-time">${new Date().toLocaleTimeString()}</div>
+    `;
+    chatBox.appendChild(welcomeDiv);
+}
+</script>
+
+{% endblock %}

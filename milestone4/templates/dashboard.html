@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 class="dashboard-title">
+    <i class="fas fa-bolt"></i>
+    Smart Energy Dashboard
+    <i class="fas fa-chart-pie"></i>
+</h2>
+
+<div class="charts-grid">
+    
+    <!-- BAR CHART -->
+    <div class="chart-card">
+        <h3><i class="fas fa-chart-bar"></i> Device-Level Energy (Bar)</h3>
+        <canvas id="deviceBarChart"></canvas>
+    </div>
+
+    <!-- PIE CHART -->
+    <div class="chart-card">
+        <h3><i class="fas fa-chart-pie"></i> Energy Distribution (Pie)</h3>
+        <canvas id="devicePieChart"></canvas>
+    </div>
+
+</div>
+
+<script>
+    const summaryData = {{ summary | tojson }};
+
+    const deviceLabels = summaryData.map(item => item.appliance);
+    const deviceValues = summaryData.map(item => item.energy);
+
+    const colors = [
+        "#4e73df", "#1cc88a", "#36b9cc",
+        "#f6c23e", "#e74a3b", "#858796",
+        "#5a5c69", "#20c997", "#fd7e14"
+    ];
+
+    // ===========================
+    // BAR CHART
+    // ===========================
+    new Chart(document.getElementById("deviceBarChart"), {
+        type: "bar",
+        data: {
+            labels: deviceLabels,
+            datasets: [{
+                label: "Average Energy (kWh)",
+                data: deviceValues,
+                backgroundColor: colors,
+                borderRadius: 8
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    }
+                }
+            }
+        }
+    });
+
+    // ===========================
+    // PIE CHART
+    // ===========================
+    new Chart(document.getElementById("devicePieChart"), {
+        type: "pie",
+        data: {
+            labels: deviceLabels,
+            datasets: [{
+                data: deviceValues,
+                backgroundColor: colors,
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+</script>
+
+{% endblock %}
