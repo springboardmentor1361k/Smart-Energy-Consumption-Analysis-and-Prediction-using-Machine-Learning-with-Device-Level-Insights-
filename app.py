@@ -84,17 +84,9 @@ def predict_page():
     """Energy prediction page"""
     if request.method == 'POST':
         try:
-            # Get input data from form
-            # For simplicity, we'll use recent data
-            df = load_energy_data()
-            if df is None:
-                return jsonify({'error': 'Data not available'}), 400
-            
-            # Get last 24 hours as input
-            input_data = df.tail(24)
-            
-            # Make prediction
-            result = predict(input_data)
+            # CHANGED: Use predict_simple() instead of loading data here
+            from flask_prediction import predict_simple
+            result = predict_simple()
             
             return jsonify(result)
         except Exception as e:

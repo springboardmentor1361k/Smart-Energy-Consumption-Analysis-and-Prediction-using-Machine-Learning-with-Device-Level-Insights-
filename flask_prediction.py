@@ -1,6 +1,7 @@
 """
-Flask Prediction Module - FINAL VERSION
-Handles energy consumption predictions with new model format
+Flask-Compatible Prediction Module
+Smart Energy Consumption Analysis
+Supports both LSTM and Linear Regression models
 """
 
 import numpy as np
@@ -174,12 +175,16 @@ def predict(input_data):
             target_scaler = joblib.load(target_scaler_path)
             print("✓ Target scaler loaded")
         
-        # Create features
-        print("Creating features...")
-        df_features = create_features(input_data)
-        
         # Load selected features
         selected_features = load_selected_features()
+        
+        # Check if features already exist (from data_features_engineered.csv)
+        if selected_features and all(f in input_data.columns for f in selected_features):
+            print("✓ Features already present in data")
+            df_features = input_data
+        else:
+            print("Creating features...")
+            df_features = create_features(input_data)
         
         if selected_features is None:
             print("Feature list not found, using model input")
@@ -249,7 +254,8 @@ def predict(input_data):
         
         # Inverse transform if target scaler exists
         if target_scaler is not None:
-            prediction = target_scaler.inverse_transform(prediction_scaled)
+            # IMPORTANT: Reshape before inverse transform (scaler expects 2D array)
+            prediction = target_scaler.inverse_transform(prediction_scaled.reshape(-1, 1))
             predicted_power = float(prediction[0][0])
             print("✓ Prediction inverse-transformed")
         else:
@@ -305,7 +311,7 @@ def predict(input_data):
 def predict_simple(hours_ahead=1):
     """Load data and make prediction"""
     try:
-        data_path = 'data/processed/data_hourly.csv'
+        data_path = 'data/processed/data_features_engineered.csv'
         
         if not os.path.exists(data_path):
             return {
