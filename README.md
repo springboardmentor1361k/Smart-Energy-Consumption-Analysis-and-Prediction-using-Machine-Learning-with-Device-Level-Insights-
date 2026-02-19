@@ -277,9 +277,6 @@ Device-Level Insights
 
 ---
 
-## 📝 License
-This project is developed as part of the Infosys Springboard Internship Program.
-
 ---
 
 
