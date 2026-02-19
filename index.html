@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html >
+<head>
+  <meta charset="UTF-8">
+  <title>Infosys Internship Energy Predictor</title>
+  <link href='https://fonts.googleapis.com/css?family=Pacifico' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Arimo' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Hind:300' rel='stylesheet' type='text/css'>
+  <link href='https://fonts.googleapis.com/css?family=Open+Sans+Condensed:300' rel='stylesheet' type='text/css'>
+  <style>
+    body {background: #e0eaec; font-family: 'Hind', sans-serif; text-align: center;}
+    h1 {color: #004d40;}
+    .login { width: 400px; margin: 50px auto; font-size: 16px; }
+    input { width: 100%; margin-bottom: 10px; background: rgba(0,0,0,0.3); border: none; outline: none; padding: 10px; font-size: 13px; color: #fff; text-shadow: 1px 1px 1px rgba(0,0,0,0.3); border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; box-shadow: inset 0 -5px 45px rgba(100,100,100,0.2), 0 1px 1px rgba(255,255,255,0.2); transition: box-shadow .5s ease; }
+    input:focus { box-shadow: inset 0 -5px 45px rgba(100,100,100,0.4), 0 1px 1px rgba(255,255,255,0.2); }
+    button { cursor: pointer; background-color: #00796b; padding: 10px; width: 100%; border: none; color: white; font-size: 18px; }
+  </style>
+</head>
+
+<body>
+ <div class="login">
+	<h1>Energy Forecaster AI</h1>
+
+     <form action="{{ url_for('predict')}}" method="post">
+      <input type="text" name="Lag_1" placeholder="Energy 1 Hour Ago (kW)" required="required" />
+      <input type="text" name="Lag_24" placeholder="Energy 24 Hours Ago (kW)" required="required" />
+      <input type="text" name="Rolling_Mean" placeholder="Avg Energy Last 24h (kW)" required="required" />
+      <input type="text" name="Hour" placeholder="Hour of Day (0-23)" required="required" />
+      <input type="text" name="Day" placeholder="Day of Week (0=Mon, 6=Sun)" required="required" />
+      <input type="text" name="Month" placeholder="Month (1-12)" required="required" />
+
+      <button type="submit" class="btn btn-primary btn-block btn-large">Predict Consumption</button>
+    </form>
+
+   <br>
+   <br>
+   <h2 style="color:red;">{{ prediction_text }}</h2>
+
+ </div>
+</body>
+</html>
