@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Energy Prediction</h2>
+
+<form method="POST">
+    <input type="text" name="values" placeholder="Enter comma separated values">
+    <button type="submit">Predict</button>
+</form>
+
+{% if result %}
+<p class="result">Prediction Result: {{ result }}</p>
+{% endif %}
+
+{% endblock %}

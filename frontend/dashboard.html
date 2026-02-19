@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>Energy Dashboard</h2>
+
+<form method="POST" enctype="multipart/form-data">
+    <input type="file" name="file" required>
+    <button type="submit">Upload CSV</button>
+</form>
+
+{% if summary %}
+<div class="cards">
+    <div class="card">Hourly Avg: {{ summary.Hourly }}</div>
+    <div class="card">Daily Avg: {{ summary.Daily }}</div>
+    <div class="card">Weekly Avg: {{ summary.Weekly }}</div>
+    <div class="card">Monthly Avg: {{ summary.Monthly }}</div>
+    <div class="card">Yearly Avg: {{ summary.Yearly }}</div>
+</div>
+
+<canvas id="energyChart"></canvas>
+
+<script>
+    const chartData = {{ chart_data|safe }};
+    const ctx = document.getElementById('energyChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: chartData.labels,
+            datasets: [{
+                label: 'Energy Consumption Average',
+                data: chartData.values
+            }]
+        }
+    });
+</script>
+
+{% endif %}
+
+{% endblock %}
