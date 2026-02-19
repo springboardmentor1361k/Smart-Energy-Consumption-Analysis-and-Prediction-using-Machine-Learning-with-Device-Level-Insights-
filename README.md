@@ -7,6 +7,8 @@
 ![Flask](https://img.shields.io/badge/Flask-3.0-green)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15-orange)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
+![Milestones](https://img.shields.io/badge/Milestones-4%2F4%20Complete-brightgreen)
+![Last Updated](https://img.shields.io/badge/Last%20Updated-February%202026-blue)
 
 ---
 
