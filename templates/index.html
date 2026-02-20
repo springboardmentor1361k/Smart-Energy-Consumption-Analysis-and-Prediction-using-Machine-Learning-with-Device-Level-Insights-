@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ENERGYPULSE</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>ENERGYPULSE</h1>
+    <p>AI Driven Energy Intelligence</p>
+</div>
+
+<div class="prediction-box">
+    <h2>Smart Energy Prediction</h2>
+
+    <form id="predictionForm">
+        <input type="number" id="hour" placeholder="Hour (0-23)" required>
+        <input type="number" id="day" placeholder="Day (0-6)" required>
+        <input type="number" id="month" placeholder="Month (1-12)" required>
+        <button type="submit">Predict Energy</button>
+    </form>
+
+    <div id="predictionResult"></div>
+</div>
+
+<div class="dashboard">
+
+    <div class="card">
+        <h3>Current Power</h3>
+        <p>2.35 kW</p>
+    </div>
+
+    <div class="card">
+        <h3>Today's Usage</h3>
+        <p>24.5 kWh</p>
+    </div>
+
+    <div class="card">
+        <h3>Monthly Cost</h3>
+        <p>₹4,820</p>
+    </div>
+
+</div>
+
+<div class="graphs">
+
+    <div class="graph-container">
+        <h3>Hourly Trend</h3>
+        <canvas id="hourlyChart"></canvas>
+    </div>
+
+    <div class="graph-container">
+        <h3>Daily Trend</h3>
+        <canvas id="dailyChart"></canvas>
+    </div>
+
+    <div class="graph-container">
+        <h3>Weekly Trend</h3>
+        <canvas id="weeklyChart"></canvas>
+    </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+</body>
+</html>
