@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: energy-prediction-api
+    env: python
+    plan: free
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn --workers 2 --worker-class sync --timeout 120 --bind 0.0.0.0:$PORT backend.app:app
+    pythonVersion: 3.10.13
