@@ -1,8 +1,18 @@
-# Smart-Energy-Consumption-Analysis-and-Prediction-using-Machine-Learning-with-Device-Level-Insights-
-## Intern Instructions
+## Final Submission
 
-- Each intern must work in an individual branch
-- Branch naming format: firstname-lastname
-- Do NOT push to main branch instead push in your branch 
-- Commit regularly with meaningful messages for every milestone
-- All evaluation will be done via your branch commit history
+The consolidated final notebook:
+notebooks/Final_Smart_Energy_Project.ipynb
+
+Frontend:
+templates/index.html
+static/style.css
+static/app.js
+
+Backend:
+app.py
+
+Model:
+models/final_lstm_model.keras
+
+Presentation:
+Smart_Energy_Consumption_prediction.pptx
