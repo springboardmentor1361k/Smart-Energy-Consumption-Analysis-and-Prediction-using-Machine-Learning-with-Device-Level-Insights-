@@ -1,1 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Smart Energy{% endblock %}</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="/static/css/style.css">
+    <script src="/static/js/app.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo"><i class="fas fa-bolt"></i> Smart Energy</div>
+            <nav>
+                <a href="/dashboard" class="nav-item active"><i class="fas fa-chart-line"></i> Dashboard</a>
+                <a href="#" class="nav-item"><i class="fas fa-plug"></i> Devices</a>
+                <a href="#" class="nav-item"><i class="fas fa-leaf"></i> Carbon</a>
+            </nav>
+            <div class="user-section">
+                <div class="user-avatar"><i class="fas fa-user"></i></div>
+                <div class="user-info">
+                    <span class="user-name">{{ current_user.username if current_user.is_authenticated else 'Guest' }}</span>
+                    <a href="/logout" class="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </aside>
 
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h2>{% block page_title %}{% endblock %}</h2>
+                <div class="status-indicator">
+                    <span class="dot"></span> Live System
+                </div>
+            </header>
+            
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+</body>
+</html>
