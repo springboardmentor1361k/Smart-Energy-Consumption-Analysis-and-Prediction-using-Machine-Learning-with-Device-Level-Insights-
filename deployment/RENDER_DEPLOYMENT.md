@@ -22,10 +22,11 @@ git push origin your-branch-name
 
 ### 4. Configure the Service
 - **Name**: energy-prediction-api (or your preferred name)
-- **Branch**: your-branch-name
+- **Branch**: RamaSubrahmanyam-Vudatha (your branch name)
 - **Runtime**: Python 3
-- **Build Command**: `pip install -r requirements.txt`
-- **Start Command**: `python backend/app.py`
+- **Root Directory**: (leave blank)
+- **Build Command**: `chmod +x build.sh && ./build.sh`
+- **Start Command**: `gunicorn --workers 2 --worker-class sync --timeout 120 --bind 0.0.0.0:$PORT backend.app:app`
 
 ### 5. Set Environment Variables (if needed)
 - Under "Environment", add any custom variables
