@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Energy Consumption Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+  />
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar glass">
+      <div class="brand">
+        <i class="fa-solid fa-bolt"></i>
+        <span>Smart Energy Consumption Analysis</span>
+      </div>
+
+      <nav class="menu">
+        <a class="{{ 'active' if active_page == 'dashboard' else '' }}" href="{{ url_for('index') }}">
+          <i class="fa-solid fa-chart-line"></i>Dashboard
+        </a>
+        <a class="{{ 'active' if active_page == 'predictions' else '' }}" href="{{ url_for('predictions_page') }}">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>Predictions
+        </a>
+        <a class="{{ 'active' if active_page == 'insights' else '' }}" href="{{ url_for('insights_page') }}">
+          <i class="fa-solid fa-lightbulb"></i>Insights
+        </a>
+        <a class="{{ 'active' if active_page == 'device_analytics' else '' }}" href="{{ url_for('device_analytics_page') }}">
+          <i class="fa-solid fa-microchip"></i>Device Analytics
+        </a>
+        <a class="{{ 'active' if active_page == 'reports' else '' }}" href="{{ url_for('reports_page') }}">
+          <i class="fa-solid fa-file-lines"></i>Reports
+        </a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar glass">
+        <h1>Smart Energy Consumption Analysis</h1>
+      </header>
+
+      {% block content %}{% endblock %}
+
+      <footer class="footer glass">
+        <div><strong>Smart Energy Consumption Analysis</strong> - Predictive Energy Analytics Dashboard</div>
+      </footer>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    window.dashboardData = {{ dashboard_data | tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+</body>
+</html>

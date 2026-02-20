@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="cards">
+  <article class="card glass fade-up">
+    <div class="card-icon blue"><i class="fa-solid fa-robot"></i></div>
+    <div>
+      <p>Predicted Next-day Consumption</p>
+      <h3 id="predictedConsumption">{{ dashboard_data.cards.predicted_next_day }} kWh</h3>
+    </div>
+  </article>
+  <article class="card glass fade-up">
+    <div class="card-icon green"><i class="fa-solid fa-chart-area"></i></div>
+    <div>
+      <p>Sustainability Score</p>
+      <h3 id="efficiencyLabel">{{ dashboard_data.cards.sustainability_score }}%</h3>
+    </div>
+  </article>
+</section>
+
+<section class="grid">
+  <article class="panel glass span-2">
+    <div class="panel-head"><h2>Prediction Form</h2></div>
+    <form id="predictionForm" class="form-grid">
+      <label>Temperature (C)
+        <input type="number" step="0.1" name="temperature" required />
+      </label>
+      <label>Humidity (%)
+        <input type="number" step="0.1" name="humidity" required />
+      </label>
+      <label>Voltage (V)
+        <input type="number" step="0.1" name="voltage" required />
+      </label>
+      <label>Current (A)
+        <input type="number" step="0.1" name="current" required />
+      </label>
+      <label>Device Usage (hours)
+        <input type="number" step="0.1" name="device_usage" required />
+      </label>
+      <button type="submit" class="primary-btn">Predict</button>
+    </form>
+
+    <div id="predictionCard" class="prediction-output">
+      <div class="result-head">
+        <h3>Prediction Result</h3>
+        <span class="result-tag">Live</span>
+      </div>
+      <div class="result-highlight">
+        <p>Predicted Energy Consumption</p>
+        <h2 id="predictionResult">-- kWh</h2>
+      </div>
+      <div class="result-grid">
+        <div class="result-item">
+          <p>Energy Risk Level</p>
+          <strong id="riskLevel">--</strong>
+        </div>
+        <div class="result-item">
+          <p>Estimated Cost</p>
+          <strong id="estimatedCost">₹ --</strong>
+        </div>
+        <div class="result-item">
+          <p>Efficiency Score</p>
+          <strong id="efficiencyScore">-- / 100</strong>
+        </div>
+      </div>
+    </div>
+  </article>
+
+  <article class="panel glass">
+    <div class="panel-head">
+      <h2>Energy Efficiency Meter</h2>
+      <span>{{ dashboard_data.cards.sustainability_score }}%</span>
+    </div>
+    <div class="meter">
+      <div
+        id="meterFill"
+        class="meter-fill"
+        style="width: {{ dashboard_data.cards.sustainability_score }}%;"
+      ></div>
+    </div>
+    <p class="help">This score updates after every prediction call.</p>
+  </article>
+
+  <article class="panel glass">
+    <div class="panel-head"><h2>Smart Energy-Saving Suggestions</h2></div>
+    <ul id="recommendationsList" class="recommendations">
+      <li>Reduce usage during peak hours (6 PM - 10 PM).</li>
+      <li>Optimize appliance usage by scheduling high-load tasks.</li>
+      <li>Shift heavy loads to off-peak times to reduce cost.</li>
+      <li>Use eco mode and auto-off timers for long-running appliances.</li>
+      <li>Track weekly usage and target a 5-10% monthly reduction.</li>
+    </ul>
+  </article>
+</section>
+{% endblock %}

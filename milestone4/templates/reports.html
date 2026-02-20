@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="cards">
+  <article class="card glass fade-up">
+    <div class="card-icon blue"><i class="fa-solid fa-calendar-days"></i></div>
+    <div>
+      <p>Monthly Projected Usage</p>
+      <h3>{{ reports_data.monthly_projection_kwh }} kWh</h3>
+    </div>
+  </article>
+  <article class="card glass fade-up">
+    <div class="card-icon purple"><i class="fa-solid fa-dollar-sign"></i></div>
+    <div>
+      <p>Monthly Projected Cost</p>
+      <h3>₹{{ reports_data.monthly_projection_cost }}</h3>
+    </div>
+  </article>
+  <article class="card glass fade-up">
+    <div class="card-icon green"><i class="fa-solid fa-leaf"></i></div>
+    <div>
+      <p>Weekly Efficiency Score</p>
+      <h3>{{ reports_data.weekly_summary.efficiency_score }}%</h3>
+    </div>
+  </article>
+</section>
+
+<section class="grid">
+  <article class="panel glass span-2">
+    <div class="panel-head"><h2>Weekly Report Summary</h2></div>
+    <div class="table-wrap">
+      <table class="report-table">
+        <thead>
+          <tr>
+            <th>Week</th>
+            <th>Consumption (kWh)</th>
+            <th>Estimated Cost (₹)</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in reports_data.report_rows %}
+          <tr>
+            <td>{{ row[0] }}</td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+            <td>{{ row[3] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </article>
+
+  <article class="panel glass">
+    <div class="panel-head"><h2>Daily Trend</h2></div>
+    <canvas id="lineChart"></canvas>
+  </article>
+
+  <article class="panel glass">
+    <div class="panel-head"><h2>Device Load Mix</h2></div>
+    <canvas id="barChart"></canvas>
+  </article>
+</section>
+{% endblock %}
