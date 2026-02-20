@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block page_title %}Overview{% endblock %}
+
+{% block content %}
+<!-- Stats Grid -->
+<div class="stats-grid">
+    <div class="stat-card primary">
+        <div class="stat-icon"><i class="fas fa-bolt"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ data.current_power }}</span>
+            <span class="stat-label">Current Power (W)</span>
+        </div>
+    </div>
+    <div class="stat-card success">
+        <div class="stat-icon"><i class="fas fa-leaf"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">15.2</span>
+            <span class="stat-label">CO2 Saved (kg)</span>
+        </div>
+    </div>
+    <div class="stat-card warning">
+        <div class="stat-icon"><i class="fas fa-exclamation-triangle"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">0</span>
+            <span class="stat-label">Alerts</span>
+        </div>
+    </div>
+    <div class="stat-card info">
+        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+        <div class="stat-info">
+            <span class="stat-value">{{ data.last_updated.split(' ')[1] }}</span>
+            <span class="stat-label">Last Update</span>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="charts-container">
+    <div class="chart-card full-width">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-area"></i> 24-Hour Consumption Trend</h3>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="mainChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <div class="card-header">
+            <h3><i class="fas fa-chart-pie"></i> Device Usage</h3>
+        </div>
+        <div class="chart-wrapper">
+            <canvas id="deviceChart"></canvas>
+        </div>
+    </div>
+    
+    <div class="chart-card">
+        <div class="card-header">
+            <h3><i class="fas fa-bullseye"></i> AI Predictions</h3>
+        </div>
+        <div class="prediction-list" id="predictionList">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+</div>
+
+<script>
+const hourlyData = {{ data.hourly_pattern|tojson }};
+const deviceData = {{ data.device_totals|tojson }};
+
+// Main Trend Chart
+new Chart(document.getElementById('mainChart'), {
+    type: 'line',
+    data: {
+        labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+        datasets: [{
+            label: 'Power (W)',
+            data: hourlyData,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+            fill: true,
+            tension: 0.4,
+            pointRadius: 0
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: { y: { beginAtZero: true, grid: { color: '#334155' } }, x: { grid: { display: false } } },
+        plugins: { legend: { display: false } }
+    }
+});
+
+// Device Chart
+new Chart(document.getElementById('deviceChart'), {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(deviceData),
+        datasets: [{
+            data: Object.values(deviceData),
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+        }]
+    }
+});
+
+// Load Predictions
+fetch('/api/predictions')
+    .then(r => r.json())
+    .then(res => {
+        const list = document.getElementById('predictionList');
+        list.innerHTML = res.predictions.slice(0, 4).map(p => `
+            <div class="pred-item">
+                <span class="time">${p.hour}:00</span>
+                <span class="value">${p.predicted_power} W</span>
+                <span class="label">Predicted</span>
+            </div>
+        `).join('');
+    });
+</script>
+{% endblock %}
