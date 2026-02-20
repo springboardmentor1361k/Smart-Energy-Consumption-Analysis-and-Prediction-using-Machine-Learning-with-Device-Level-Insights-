@@ -97,6 +97,11 @@ Academic Project Submission
 <script>
 let chart;
 
+// Get backend URL from environment or use current host
+const BACKEND_URL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:5000' 
+    : `${window.location.protocol}//${window.location.hostname}`;
+
 function predict() {
 
 let values = [
@@ -105,7 +110,7 @@ let values = [
     Number(d7.value)
 ];
 
-fetch("http://127.0.0.1:5000/predict", {
+fetch(`${BACKEND_URL}/predict`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify({values})

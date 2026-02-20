@@ -2,13 +2,15 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 import numpy as np
 from tensorflow.keras.models import load_model
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 # Load trained model
 try:
-    model = load_model("energy_lstm_model.h5", compile=False)
+    model_path = os.path.join(os.path.dirname(__file__), "..", "models", "energy_lstm_model.h5")
+    model = load_model(model_path, compile=False)
 except Exception as e:
     print("Model load error:", e)
     model = None
@@ -49,5 +51,6 @@ def predict():
         }), 500
 
 
-if __name__ == "__main__":
+if _port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=Falsn__":
     app.run(debug=True)
