@@ -6,3 +6,6 @@ services:
     startCommand: "gunicorn app:app"
     plan: free
     autoDeploy: false
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10.13
