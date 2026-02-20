@@ -1,0 +1,37 @@
+{
+  "device_names": {
+    "Appliance1": "Fridge_Freezer",
+    "Appliance2": "Washing_Machine",
+    "Appliance3": "Dishwasher",
+    "Appliance4": "Television",
+    "Appliance5": "Microwave",
+    "Appliance6": "Toaster",
+    "Appliance7": "HiFi",
+    "Appliance8": "Kettle",
+    "Appliance9": "Overhead_Fan"
+  },
+  "device_rooms": {
+    "Aggregate": "Whole_House",
+    "Fridge_Freezer": "Kitchen",
+    "Washing_Machine": "Utility",
+    "Dishwasher": "Kitchen",
+    "Television": "Living_Room",
+    "Microwave": "Kitchen",
+    "Toaster": "Kitchen",
+    "HiFi": "Living_Room",
+    "Kettle": "Kitchen",
+    "Overhead_Fan": "Bedroom"
+  },
+  "device_categories": {
+    "Aggregate": "Total",
+    "Fridge_Freezer": "Cold_Appliance",
+    "Washing_Machine": "Wet_Appliance",
+    "Dishwasher": "Wet_Appliance",
+    "Television": "Entertainment",
+    "Microwave": "Cooking",
+    "Toaster": "Cooking",
+    "HiFi": "Entertainment",
+    "Kettle": "Cooking",
+    "Overhead_Fan": "Climate"
+  }
+}

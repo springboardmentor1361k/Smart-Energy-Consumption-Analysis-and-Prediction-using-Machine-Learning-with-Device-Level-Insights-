@@ -1,0 +1,33 @@
+{
+  "lstm_weight": 0.0,
+  "xgb_weight": 1.0,
+  "seq_length": 24,
+  "n_features": 24,
+  "feature_cols": [
+    "is_weekend",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_peak",
+    "is_night",
+    "Agg_lag1h",
+    "Agg_lag2h",
+    "Agg_lag3h",
+    "Agg_lag6h",
+    "Agg_lag12h",
+    "Agg_lag24h",
+    "Agg_lag48h",
+    "Agg_roll_mean_3h",
+    "Agg_roll_mean_6h",
+    "Agg_roll_mean_24h",
+    "Agg_roll_std_24h",
+    "Agg_diff_1h",
+    "Agg_diff_24h",
+    "Dishwasher_lag1h",
+    "Kettle_lag1h",
+    "Washing_Machine_lag1h",
+    "Fridge_Freezer_lag1h"
+  ],
+  "best_ensemble_r2": 0.5518777685478602
+}
