@@ -3,7 +3,9 @@
 > **AI/ML-Driven Analysis and Forecasting of Device-Level Energy Consumption**  
 > Infosys Springboard Internship Project
 
-![Python](https://img.shields.io/badge/Python-3.12-blue)
+[![Live Demo Dashboard](https://img.shields.io/badge/Live_Dashboard-Click_Here-FF4B4B?style=for-the-badge&logo=render&logoColor=white)](https://smart-energy-dashboard-gbxk.onrender.com)
+
+![Python](https://img.shields.io/badge/Python-3.10.13-blue)
 ![Flask](https://img.shields.io/badge/Flask-3.0-green)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.15-orange)
 ![Status](https://img.shields.io/badge/Status-Production%20Ready-success)
