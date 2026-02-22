@@ -180,13 +180,11 @@ def clean_data(df):
     
     # Step 4: Remove Unnecessary Columns
     print("\n[STEP 4] Removing Unnecessary Columns...")
-    columns_to_remove = ['Date', 'Time', 'Global_reactive_power', 'Voltage', 'Global_intensity']
+    columns_to_remove = ['Date', 'Time', 'Global_reactive_power']
     removal_reasons = {
         'Date': 'Merged into Datetime index',
         'Time': 'Merged into Datetime index',
         'Global_reactive_power': 'Not billed; focus on active power',
-        'Voltage': 'Low variability (~240V)',
-        'Global_intensity': 'Derived feature (redundant)'
     }
     
     for col in columns_to_remove:
@@ -194,7 +192,9 @@ def clean_data(df):
             print(f"   - {col}: {removal_reasons.get(col, 'Removed')}")
             df_cleaned = df_cleaned.drop(columns=[col])
     
-    numeric_cols = ['Global_active_power', 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
+    print(f"   [OK] Kept Voltage (corr=-0.40) and Global_intensity (corr=0.999) as features")
+    
+    numeric_cols = ['Global_active_power', 'Voltage', 'Global_intensity', 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
     print(f"\n   [OK] Reduced from {len(df.columns)} to {len(df_cleaned.columns)} columns")
     
     # Step 5: Outlier Detection and Capping
@@ -547,7 +547,9 @@ def generate_module2_visualization(df, df_hourly, df_hourly_normalized, train_da
                                                 medianprops=dict(color='red', linewidth=2))
     ax9.set_title('Normalized Feature Distribution', fontweight='bold')
     ax9.set_ylabel('Normalized Values (0-1)')
-    ax9.set_xticklabels(['Global\nActive', 'Kitchen', 'Laundry', 'HVAC'], fontsize=9)
+    short_names = {'Global_active_power': 'Global\nActive', 'Voltage': 'Voltage', 'Global_intensity': 'Global\nIntensity',
+                   'Sub_metering_1': 'Kitchen', 'Sub_metering_2': 'Laundry', 'Sub_metering_3': 'HVAC'}
+    ax9.set_xticklabels([short_names.get(c, c) for c in numeric_cols], fontsize=8, rotation=15)
     ax9.grid(axis='y', alpha=0.3)
     
     plt.savefig(os.path.join(VIZ_DIR, 'Milestone1_Module2_Preprocessing.png'), dpi=300, bbox_inches='tight')

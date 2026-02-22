@@ -268,30 +268,20 @@ async function loadPredictions() {
     if (!data) return;
     predictionsLoaded = true;
 
-    // Metrics cards
+    // Model metrics cards — show ALL models
     const metricsDiv = document.getElementById('prediction-metrics');
-    if (metricsDiv && data.metrics) {
-        const m = data.metrics;
-        metricsDiv.innerHTML = `
-            <div class="stat-card stat-card-gradient-3">
-                <div class="stat-icon">🎯</div>
-                <div class="stat-value">${m.accuracy}%</div>
-                <div class="stat-label">Prediction Accuracy (R²)</div>
+    if (metricsDiv && data.all_models) {
+        metricsDiv.innerHTML = data.all_models.map(m => `
+            <div class="stat-card" style="border-top: 3px solid ${m.color};">
+                <div class="stat-icon">${m.icon}</div>
+                <div class="stat-value" style="color: ${m.color}">${m.accuracy}%</div>
+                <div class="stat-label">${m.name} Accuracy</div>
+                <div style="font-size:0.7rem; color:#94a3b8; margin-top:4px;">R²=${m.r2} · MAE=${m.mae}</div>
             </div>
-            <div class="stat-card stat-card-gradient-2">
-                <div class="stat-icon">📊</div>
-                <div class="stat-value">${m.mae?.toFixed(6)}</div>
-                <div class="stat-label">Mean Absolute Error</div>
-            </div>
-            <div class="stat-card stat-card-gradient-1">
-                <div class="stat-icon">📈</div>
-                <div class="stat-value">${m.mape}%</div>
-                <div class="stat-label">MAPE</div>
-            </div>
-        `;
+        `).join('');
     }
 
-    // Prediction chart
+    // Prediction chart (LSTM predictions vs actual)
     if (data.chart) {
         const chartData = data.chart;
         if (chartData.datasets?.length >= 2) {
@@ -349,21 +339,23 @@ async function loadPredictions() {
         });
     }
 
-    // Metrics table
-    if (data.metrics) {
-        const m = data.metrics;
+    // All-models comparison table
+    if (data.all_models) {
+        const models = data.all_models;
         document.getElementById('metrics-table').innerHTML = `
             <table class="metrics-table">
                 <thead>
-                    <tr><th>Metric</th><th>Value</th></tr>
+                    <tr>
+                        <th>Metric</th>
+                        ${models.map(m => `<th style="color:${m.color}">${m.icon} ${m.name}</th>`).join('')}
+                    </tr>
                 </thead>
                 <tbody>
-                    <tr><td>MAE (kW)</td><td class="metric-good">${m.mae?.toFixed(6)}</td></tr>
-                    <tr><td>RMSE (kW)</td><td class="metric-good">${m.rmse?.toFixed(6)}</td></tr>
-                    <tr><td>R² Score</td><td class="metric-good">${m.r2?.toFixed(4)}</td></tr>
-                    <tr><td>MAPE (%)</td><td class="metric-good">${m.mape}%</td></tr>
-                    <tr><td>Accuracy</td><td class="metric-good">${m.accuracy}%</td></tr>
-                    <tr><td>Total Predictions</td><td>${m.total_predictions?.toLocaleString()}</td></tr>
+                    <tr><td>R² Score</td>${models.map(m => `<td class="metric-good">${m.r2}</td>`).join('')}</tr>
+                    <tr><td>MAE (kW)</td>${models.map(m => `<td>${m.mae}</td>`).join('')}</tr>
+                    <tr><td>RMSE (kW)</td>${models.map(m => `<td>${m.rmse}</td>`).join('')}</tr>
+                    <tr><td>MAPE (%)</td>${models.map(m => `<td>${m.mape}%</td>`).join('')}</tr>
+                    <tr><td>Accuracy</td>${models.map(m => `<td class="metric-good">${m.accuracy}%</td>`).join('')}</tr>
                 </tbody>
             </table>
         `;
@@ -382,30 +374,30 @@ async function loadComparison() {
     comparisonLoaded = true;
 
     const b = data.baseline;
+    const x = data.xgboost;
     const l = data.lstm;
 
-    // Model cards
-    document.getElementById('baseline-card').innerHTML = `
-        <h4 style="color: #ef4444;">📐 ${b.name}</h4>
-        <div class="model-type">${b.type} Model</div>
-        <div class="model-metric"><div class="model-metric-label">R² Score</div><div class="model-metric-value">${b.r2}</div></div>
-        <div class="model-metric"><div class="model-metric-label">MAE</div><div class="model-metric-value">${b.mae}</div></div>
-        <div class="model-metric"><div class="model-metric-label">RMSE</div><div class="model-metric-value">${b.rmse}</div></div>
-        <div class="model-metric"><div class="model-metric-label">MAPE</div><div class="model-metric-value">${b.mape}%</div></div>
-        <div class="model-metric"><div class="model-metric-label">Training Time</div><div class="model-metric-value">${b.training_time}</div></div>
-    `;
+    // Helper to render a model card
+    function renderModelCard(m, iconEmoji, isWinner) {
+        const winnerBadge = isWinner ? '<div style="color:#fbbf24;font-weight:700;margin-top:8px;">🏆 Best R²</div>' : '';
+        return `
+            <h4 style="color: ${m.color};">${iconEmoji} ${m.name}</h4>
+            <div class="model-type">${m.type} Model</div>
+            <div class="model-metric"><div class="model-metric-label">R² Score</div><div class="model-metric-value" style="color:${m.color};">${m.r2}</div></div>
+            <div class="model-metric"><div class="model-metric-label">MAE</div><div class="model-metric-value">${m.mae}</div></div>
+            <div class="model-metric"><div class="model-metric-label">RMSE</div><div class="model-metric-value">${m.rmse}</div></div>
+            <div class="model-metric"><div class="model-metric-label">MAPE</div><div class="model-metric-value">${m.mape}%</div></div>
+            <div class="model-metric"><div class="model-metric-label">Training Time</div><div class="model-metric-value">${m.training_time}</div></div>
+            ${winnerBadge}
+        `;
+    }
 
-    document.getElementById('lstm-card').innerHTML = `
-        <h4 style="color: #10b981;">🧠 ${l.name}</h4>
-        <div class="model-type">${l.type} Model</div>
-        <div class="model-metric"><div class="model-metric-label">R² Score</div><div class="model-metric-value" style="color: #34d399;">${l.r2}</div></div>
-        <div class="model-metric"><div class="model-metric-label">MAE</div><div class="model-metric-value" style="color: #34d399;">${l.mae}</div></div>
-        <div class="model-metric"><div class="model-metric-label">RMSE</div><div class="model-metric-value" style="color: #34d399;">${l.rmse}</div></div>
-        <div class="model-metric"><div class="model-metric-label">MAPE</div><div class="model-metric-value" style="color: #34d399;">${l.mape}%</div></div>
-        <div class="model-metric"><div class="model-metric-label">Training Time</div><div class="model-metric-value">${l.training_time}</div></div>
-    `;
+    // Render model cards
+    document.getElementById('baseline-card').innerHTML = renderModelCard(b, '📐', data.winner === 'Linear Regression');
+    document.getElementById('xgboost-card').innerHTML = renderModelCard(x, '🌲', data.winner === 'XGBoost');
+    document.getElementById('lstm-card').innerHTML = renderModelCard(l, '🧠', data.winner === 'LSTM');
 
-    // Comparison bar chart (normalized for visibility)
+    // 3-Model Comparison bar chart
     createChart('comparisonBarChart', {
         type: 'bar',
         data: {
@@ -416,6 +408,14 @@ async function loadComparison() {
                     data: [b.r2, b.mae, b.rmse, b.mape],
                     backgroundColor: '#ef4444aa',
                     borderColor: '#ef4444',
+                    borderWidth: 2,
+                    borderRadius: 6,
+                },
+                {
+                    label: 'XGBoost',
+                    data: [x.r2, x.mae, x.rmse, x.mape],
+                    backgroundColor: '#f59e0baa',
+                    borderColor: '#f59e0b',
                     borderWidth: 2,
                     borderRadius: 6,
                 },
@@ -440,37 +440,34 @@ async function loadComparison() {
         }
     });
 
-    // Improvement chart
-    if (data.improvements) {
-        const imp = data.improvements;
-        createChart('improvementChart', {
-            type: 'bar',
-            data: {
-                labels: Object.keys(imp).map(k => k.toUpperCase()),
-                datasets: [{
-                    label: 'Improvement %',
-                    data: Object.values(imp),
-                    backgroundColor: Object.values(imp).map(v => v > 0 ? '#10b981aa' : '#ef4444aa'),
-                    borderColor: Object.values(imp).map(v => v > 0 ? '#10b981' : '#ef4444'),
-                    borderWidth: 2,
-                    borderRadius: 6,
-                }]
+    // R² Score comparison — horizontal bar (clearer ranking)
+    createChart('improvementChart', {
+        type: 'bar',
+        data: {
+            labels: [b.name, x.name, l.name],
+            datasets: [{
+                label: 'R² Score',
+                data: [b.r2, x.r2, l.r2],
+                backgroundColor: [b.color + 'aa', x.color + 'aa', l.color + 'aa'],
+                borderColor: [b.color, x.color, l.color],
+                borderWidth: 2,
+                borderRadius: 6,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `R² = ${ctx.raw}` } }
             },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                    tooltip: { callbacks: { label: ctx => `${ctx.raw > 0 ? '+' : ''}${ctx.raw}% improvement` } }
-                },
-                scales: {
-                    x: { grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'Improvement (%)' } },
-                    y: { grid: { display: false } }
-                }
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.04)' }, title: { display: true, text: 'R² Score' }, min: 0, max: 1.05 },
+                y: { grid: { display: false } }
             }
-        });
-    }
+        }
+    });
 
     // Feature importance
     if (data.feature_importance?.length > 0) {

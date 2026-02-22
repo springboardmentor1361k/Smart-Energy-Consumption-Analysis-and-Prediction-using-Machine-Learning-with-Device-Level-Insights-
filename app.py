@@ -125,6 +125,7 @@ print("[INFO] Loading prediction model...")
 lr_model = None
 lr_feature_order = None
 device_averages = {}
+global_avgs = {}
 
 try:
     lr_model = joblib.load(os.path.join(MODELS_DIR, 'linear_regression_model.pkl'))
@@ -154,18 +155,25 @@ try:
 except Exception as e:
     print(f"  [WARN] Could not load LR model: {e}")
 
-# Pre-compute historical device averages per (hour, month) for realistic predictions
+# Pre-compute historical feature averages per (hour, month) for realistic predictions
+# CRITICAL: Must include Voltage, Global_intensity — they are the model's top features
 if not df_features.empty:
     try:
-        device_cols = ['total_submetering', 'kitchen_ratio', 'laundry_ratio',
-                       'hvac_ratio', 'dominant_device']
-        available = [c for c in device_cols if c in df_features.columns]
+        # Include ALL features the model needs, not just device features
+        avg_cols = ['Voltage', 'Global_intensity',
+                    'total_submetering', 'kitchen_ratio', 'laundry_ratio',
+                    'hvac_ratio', 'dominant_device']
+        available = [c for c in avg_cols if c in df_features.columns]
         if available and 'hour' in df_features.columns and 'month' in df_features.columns:
             grouped = df_features.groupby(['hour', 'month'])[available].mean()
             device_averages = grouped.to_dict('index')
-            print(f"  [OK] Device averages computed ({len(device_averages)} groups)")
+            print(f"  [OK] Feature averages computed ({len(device_averages)} groups)")
+            # Also compute global averages as fallback
+            global_avgs = df_features[available].mean().to_dict()
+            print(f"       Includes: {available}")
     except Exception as e:
-        print(f"  [WARN] Could not compute device averages: {e}")
+        print(f"  [WARN] Could not compute feature averages: {e}")
+        global_avgs = {}
 
 # ─── Helper Functions ─────────────────────────────────────────────────────────
 
@@ -266,17 +274,22 @@ def api_predict():
         dayofweek_sin = math.sin(2 * math.pi * dayofweek / 7)
         dayofweek_cos = math.cos(2 * math.pi * dayofweek / 7)
 
-        # Device features from historical averages
+        # Features from historical averages (Voltage, Global_intensity are CRITICAL)
         key = (hour, month)
         avg = device_averages.get(key, {})
-        total_submetering = avg.get('total_submetering', 7.5)
-        kitchen_ratio = avg.get('kitchen_ratio', 0.15)
-        laundry_ratio = avg.get('laundry_ratio', 0.25)
-        hvac_ratio = avg.get('hvac_ratio', 0.60)
-        dominant_device = avg.get('dominant_device', 2)
+        # Use global averages as fallback if specific (hour, month) not found
+        fallback = global_avgs
+        voltage = avg.get('Voltage', fallback.get('Voltage', 241.0))
+        global_intensity = avg.get('Global_intensity', fallback.get('Global_intensity', 4.6))
+        total_submetering = avg.get('total_submetering', fallback.get('total_submetering', 7.5))
+        kitchen_ratio = avg.get('kitchen_ratio', fallback.get('kitchen_ratio', 0.15))
+        laundry_ratio = avg.get('laundry_ratio', fallback.get('laundry_ratio', 0.25))
+        hvac_ratio = avg.get('hvac_ratio', fallback.get('hvac_ratio', 0.60))
+        dominant_device = avg.get('dominant_device', fallback.get('dominant_device', 2))
 
         # Build feature vector in the correct order
         feature_map = {
+            'Voltage': voltage, 'Global_intensity': global_intensity,
             'hour': hour, 'day': day, 'month': month,
             'dayofweek': dayofweek, 'quarter': quarter,
             'is_weekend': is_weekend, 'year': year,
@@ -302,9 +315,11 @@ def api_predict():
         daily_cost = daily_kwh * rate_per_kwh
         monthly_cost = monthly_kwh * rate_per_kwh
 
-        # Historical average for this hour
-        hist_avg = 1.1  # fallback
+        # Historical average for this hour (computed from actual data)
+        hist_avg = 0.0
         if not df_hourly.empty and 'Global_active_power' in df_hourly.columns:
+            global_mean = float(df_hourly['Global_active_power'].mean())
+            hist_avg = global_mean  # default to overall mean
             hourly_avgs = df_hourly['Global_active_power'].groupby(df_hourly.index.hour).mean()
             if hour in hourly_avgs.index:
                 hist_avg = float(hourly_avgs[hour])
@@ -353,8 +368,19 @@ def api_overview():
     summary = analysis_cache.get('summary', get_consumption_summary(df_hourly))
     costs = analysis_cache.get('costs', estimate_costs(df_hourly))
 
-    # LSTM accuracy — display value (will be updated with improved model later)
-    lstm_accuracy = 91.9
+    # LSTM accuracy — computed dynamically from predictions
+    lstm_accuracy = 0.0
+    if not df_predictions.empty and 'Actual' in df_predictions.columns and 'Predicted' in df_predictions.columns:
+        _actual = df_predictions['Actual'].dropna()
+        _predicted = df_predictions['Predicted'].dropna()
+        _cidx = _actual.index.intersection(_predicted.index)
+        if len(_cidx) > 0:
+            _actual = _actual.loc[_cidx]
+            _predicted = _predicted.loc[_cidx]
+            _mask = _actual > 0.1
+            if _mask.sum() > 0:
+                _mape = float(np.mean(np.abs((_actual[_mask] - _predicted[_mask]) / _actual[_mask])) * 100)
+                lstm_accuracy = round(100 - _mape, 1)
 
     overview = {
         'total_records': summary.get('total_records', len(df_hourly)),
@@ -362,7 +388,7 @@ def api_overview():
         'avg_power_kw': summary.get('global_power', {}).get('mean', 0),
         'max_power_kw': summary.get('global_power', {}).get('max', 0),
         'devices_tracked': 3,
-        'features_engineered': 53,
+        'features_engineered': len(df_features.columns) if not df_features.empty else 0,
         'lstm_accuracy': lstm_accuracy,
         'monthly_cost': costs.get('monthly_cost', 0),
         'currency': costs.get('currency', '₹'),
@@ -448,11 +474,13 @@ def api_consumption_trend():
 
 @app.route('/api/predictions')
 def api_predictions():
-    """Get LSTM prediction results."""
+    """Get prediction results for all models."""
     if df_predictions.empty:
         return jsonify({'error': 'No prediction data available'}), 404
 
-    # Prepare chart data
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+    # Prepare LSTM chart data
     actual_col = 'Actual' if 'Actual' in df_predictions.columns else df_predictions.columns[0]
     pred_col = 'Predicted' if 'Predicted' in df_predictions.columns else df_predictions.columns[1] if len(df_predictions.columns) > 1 else None
 
@@ -462,17 +490,80 @@ def api_predictions():
 
     chart_data = df_to_chart_data(df_predictions, columns, max_points=400)
 
-    # Display metrics (will be updated with improved model later)
-    metrics = {
-        'mae': 0.1482,
-        'rmse': 0.2034,
-        'r2': 0.9187,
-        'mape': 14.83,
-        'accuracy': 91.9,
-        'total_predictions': len(df_predictions),
-    }
+    # --- Compute metrics for ALL 3 models ---
 
-    # Error distribution
+    # Helper: compute metrics from y_true and y_pred
+    def _compute_metrics(y_true, y_pred):
+        mae = round(float(mean_absolute_error(y_true, y_pred)), 4)
+        rmse = round(float(np.sqrt(mean_squared_error(y_true, y_pred))), 4)
+        r2 = round(float(r2_score(y_true, y_pred)), 4)
+        mask = y_true > 0.1
+        mape = round(float(np.mean(np.abs((y_true[mask] - y_pred[mask]) / y_true[mask])) * 100), 2) if mask.sum() > 0 else 0.0
+        accuracy = round(100 - mape, 1)
+        return {'mae': mae, 'rmse': rmse, 'r2': r2, 'mape': mape, 'accuracy': accuracy}
+
+    # Prepare test data for LR and XGBoost
+    all_models = []
+    try:
+        _df = pd.read_csv(os.path.join(PROCESSED_DIR, 'data_features.csv'), index_col=0, parse_dates=True)
+        _target = 'Global_active_power'
+        _excl = [_target, 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
+        _leaky = ['_lag_', '_rolling_', '_diff_', '_zscore', '_pct_change']
+        _safe = [c for c in _df.columns if c not in _excl and not any(p in c for p in _leaky) and _target not in c]
+        _X = _df[_safe].select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan).fillna(0)
+        _y = _df[_target]
+        _ts, _vs = int(0.7*len(_df)), int(0.15*len(_df))
+        _Xt, _yt = _X.iloc[_ts+_vs:], _y.iloc[_ts+_vs:]
+
+        import joblib as _jl
+
+        # Linear Regression
+        try:
+            _lr = _jl.load(os.path.join(MODELS_DIR, 'linear_regression_model.pkl'))
+            _yp_lr = _lr.predict(_Xt)
+            lr_m = _compute_metrics(_yt.values, _yp_lr)
+            lr_m['name'] = 'Linear Regression'
+            lr_m['color'] = '#ef4444'
+            lr_m['icon'] = '📐'
+            all_models.append(lr_m)
+        except Exception:
+            pass
+
+        # XGBoost
+        try:
+            _xgb = _jl.load(os.path.join(MODELS_DIR, 'xgboost_model.pkl'))
+            _yp_xgb = _xgb.predict(_Xt)
+            xgb_m = _compute_metrics(_yt.values, _yp_xgb)
+            xgb_m['name'] = 'XGBoost'
+            xgb_m['color'] = '#f59e0b'
+            xgb_m['icon'] = '🌲'
+            all_models.append(xgb_m)
+        except Exception:
+            pass
+    except Exception:
+        pass
+
+    # LSTM
+    lstm_m = {'mae': 0.0, 'rmse': 0.0, 'r2': 0.0, 'mape': 0.0, 'accuracy': 0.0,
+              'name': 'LSTM', 'color': '#10b981', 'icon': '🧠'}
+    if pred_col and actual_col:
+        _actual = df_predictions[actual_col].dropna()
+        _predicted = df_predictions[pred_col].dropna()
+        _cidx = _actual.index.intersection(_predicted.index)
+        if len(_cidx) > 0:
+            _actual = _actual.loc[_cidx]
+            _predicted = _predicted.loc[_cidx]
+            lstm_m = _compute_metrics(_actual.values, _predicted.values)
+            lstm_m['name'] = 'LSTM'
+            lstm_m['color'] = '#10b981'
+            lstm_m['icon'] = '🧠'
+    all_models.append(lstm_m)
+
+    # Best model metrics (for backward compat)
+    best = max(all_models, key=lambda m: m['r2']) if all_models else lstm_m
+    metrics = {**best, 'total_predictions': len(df_predictions)}
+
+    # Error distribution (LSTM)
     error_dist = {}
     if pred_col and actual_col:
         errors = (df_predictions[actual_col] - df_predictions[pred_col]).dropna()
@@ -484,64 +575,92 @@ def api_predictions():
     return jsonify({
         'chart': chart_data,
         'metrics': metrics,
+        'all_models': all_models,
         'error_distribution': error_dist
     })
 
 
 @app.route('/api/model-comparison')
 def api_model_comparison():
-    """Compare baseline (Linear Regression) vs LSTM performance."""
-    # Baseline metrics (computed from saved model on test set)
+    """Compare all models: Linear Regression, XGBoost, and LSTM."""
+    from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+
+    # Helper: prepare test data for baseline models
+    _df = None
+    _Xt = None
+    _yt = None
+    try:
+        _df = pd.read_csv(os.path.join(PROCESSED_DIR, 'data_features.csv'), index_col=0, parse_dates=True)
+        _target = 'Global_active_power'
+        _excl = [_target, 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
+        _leaky = ['_lag_', '_rolling_', '_diff_', '_zscore', '_pct_change']
+        _safe = [c for c in _df.columns if c not in _excl and not any(p in c for p in _leaky) and _target not in c]
+        _X = _df[_safe].select_dtypes(include=[np.number]).replace([np.inf, -np.inf], np.nan).fillna(0)
+        _y = _df[_target]
+        _ts, _vs = int(0.7*len(_df)), int(0.15*len(_df))
+        _Xt, _yt = _X.iloc[_ts+_vs:], _y.iloc[_ts+_vs:]
+    except Exception as e:
+        print(f"[WARN] Could not load test data: {e}")
+
+    # 1. Linear Regression metrics
     baseline_metrics = {
-        'name': 'Linear Regression',
-        'type': 'Baseline',
-        'mae': 0.2140,
-        'rmse': 0.3067,
-        'r2': 0.8093,
-        'mape': 28.39,
-        'training_time': '< 1 min',
-        'color': '#e74c3c'
+        'name': 'Linear Regression', 'type': 'Baseline',
+        'mae': 0.0, 'rmse': 0.0, 'r2': 0.0, 'mape': 0.0,
+        'training_time': '< 1 min', 'color': '#ef4444'
     }
+    try:
+        import joblib as _jl
+        _lr = _jl.load(os.path.join(MODELS_DIR, 'linear_regression_model.pkl'))
+        if _Xt is not None:
+            _yp = _lr.predict(_Xt)
+            baseline_metrics['mae'] = round(float(mean_absolute_error(_yt, _yp)), 4)
+            baseline_metrics['rmse'] = round(float(np.sqrt(mean_squared_error(_yt, _yp))), 4)
+            baseline_metrics['r2'] = round(float(r2_score(_yt, _yp)), 4)
+            _m = _yt > 0.1
+            if _m.sum() > 0:
+                baseline_metrics['mape'] = round(float(np.mean(np.abs((_yt[_m] - _yp[_m]) / _yt[_m])) * 100), 2)
+    except Exception as e:
+        print(f"[WARN] LR metrics error: {e}")
 
-    # LSTM metrics (display values — will be replaced with actual trained model later)
+    # 2. XGBoost metrics
+    xgb_metrics = {
+        'name': 'XGBoost', 'type': 'Ensemble',
+        'mae': 0.0, 'rmse': 0.0, 'r2': 0.0, 'mape': 0.0,
+        'training_time': '~2 min', 'color': '#f59e0b'
+    }
+    try:
+        import joblib as _jl
+        _xgb = _jl.load(os.path.join(MODELS_DIR, 'xgboost_model.pkl'))
+        if _Xt is not None:
+            _yp_x = _xgb.predict(_Xt)
+            xgb_metrics['mae'] = round(float(mean_absolute_error(_yt, _yp_x)), 4)
+            xgb_metrics['rmse'] = round(float(np.sqrt(mean_squared_error(_yt, _yp_x))), 4)
+            xgb_metrics['r2'] = round(float(r2_score(_yt, _yp_x)), 4)
+            _m = _yt > 0.1
+            if _m.sum() > 0:
+                xgb_metrics['mape'] = round(float(np.mean(np.abs((_yt[_m] - _yp_x[_m]) / _yt[_m])) * 100), 2)
+    except Exception as e:
+        print(f"[WARN] XGBoost metrics error: {e}")
+
+    # 3. LSTM metrics — from saved predictions
     lstm_metrics = {
-        'name': 'LSTM Neural Network',
-        'type': 'Advanced',
-        'mae': 0.1482,
-        'rmse': 0.2034,
-        'r2': 0.9187,
-        'mape': 14.83,
-        'training_time': '~13 min',
-        'color': '#2ecc71'
+        'name': 'LSTM Neural Network', 'type': 'Deep Learning',
+        'mae': 0.0, 'rmse': 0.0, 'r2': 0.0, 'mape': 0.0,
+        'training_time': '~15 min', 'color': '#10b981'
     }
-
-    # NOTE: Dynamic override disabled until improved model is trained
-    # Uncomment the block below once the new LSTM model is ready
-    # if not df_predictions.empty and 'Actual' in df_predictions.columns and 'Predicted' in df_predictions.columns:
-    #     from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
-    #     actual = df_predictions['Actual'].dropna()
-    #     predicted = df_predictions['Predicted'].dropna()
-    #     common_idx = actual.index.intersection(predicted.index)
-    #     if len(common_idx) > 0:
-    #         actual = actual.loc[common_idx]
-    #         predicted = predicted.loc[common_idx]
-    #         lstm_metrics['mae'] = round(float(mean_absolute_error(actual, predicted)), 6)
-    #         lstm_metrics['rmse'] = round(float(np.sqrt(mean_squared_error(actual, predicted))), 6)
-    #         lstm_metrics['r2'] = round(float(r2_score(actual, predicted)), 4)
-    #         mask = actual > 0.001
-    #         if mask.sum() > 0:
-    #             lstm_metrics['mape'] = round(float(np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])) * 100), 2)
-
-    # Improvement percentages
-    improvements = {}
-    for metric in ['mae', 'rmse', 'mape']:
-        baseline_val = baseline_metrics[metric]
-        lstm_val = lstm_metrics[metric]
-        if isinstance(baseline_val, (int, float)) and isinstance(lstm_val, (int, float)) and baseline_val > 0:
-            improvements[metric] = round((baseline_val - lstm_val) / baseline_val * 100, 1)
-
-    if isinstance(baseline_metrics['r2'], (int, float)) and isinstance(lstm_metrics['r2'], (int, float)):
-        improvements['r2'] = round((lstm_metrics['r2'] - baseline_metrics['r2']) / baseline_metrics['r2'] * 100, 1)
+    if not df_predictions.empty and 'Actual' in df_predictions.columns and 'Predicted' in df_predictions.columns:
+        actual = df_predictions['Actual'].dropna()
+        predicted = df_predictions['Predicted'].dropna()
+        common_idx = actual.index.intersection(predicted.index)
+        if len(common_idx) > 0:
+            actual = actual.loc[common_idx]
+            predicted = predicted.loc[common_idx]
+            lstm_metrics['mae'] = round(float(mean_absolute_error(actual, predicted)), 4)
+            lstm_metrics['rmse'] = round(float(np.sqrt(mean_squared_error(actual, predicted))), 4)
+            lstm_metrics['r2'] = round(float(r2_score(actual, predicted)), 4)
+            mask = actual > 0.1
+            if mask.sum() > 0:
+                lstm_metrics['mape'] = round(float(np.mean(np.abs((actual[mask] - predicted[mask]) / actual[mask])) * 100), 2)
 
     # Feature importance
     feat_imp = []
@@ -549,13 +668,14 @@ def api_model_comparison():
         top_features = df_feat_imp.head(10)
         feat_imp = top_features.to_dict('records')
 
-    # Determine winner dynamically based on R2 score
-    winner = 'LSTM' if lstm_metrics['r2'] > baseline_metrics['r2'] else 'Linear Regression'
+    # Determine winner from all 3 models
+    all_models = {'Linear Regression': baseline_metrics, 'XGBoost': xgb_metrics, 'LSTM': lstm_metrics}
+    winner = max(all_models, key=lambda k: all_models[k]['r2'])
 
     return jsonify({
         'baseline': baseline_metrics,
+        'xgboost': xgb_metrics,
         'lstm': lstm_metrics,
-        'improvements': improvements,
         'feature_importance': feat_imp,
         'winner': winner
     })

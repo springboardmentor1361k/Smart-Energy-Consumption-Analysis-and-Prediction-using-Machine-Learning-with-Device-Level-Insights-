@@ -149,7 +149,7 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3>LSTM Predictions vs Actual Values</h3>
+                    <h3>Predictions vs Actual Values (LSTM)</h3>
                 </div>
                 <div class="chart-wrapper chart-wrapper-tall">
                     <canvas id="predictionChart"></canvas>
@@ -167,7 +167,7 @@
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <h3>Model Performance Summary</h3>
+                        <h3>All Models — Performance Summary</h3>
                     </div>
                     <div id="metrics-table" class="metrics-table-wrapper"></div>
                 </div>
@@ -176,9 +176,9 @@
 
         <!-- ═══ Model Comparison Section ══════════════════════════════ -->
         <section id="section-comparison" class="section">
-            <div class="comparison-header">
+            <div class="comparison-header" style="grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
                 <div class="card model-card model-card-baseline" id="baseline-card"></div>
-                <div class="vs-badge">VS</div>
+                <div class="card model-card model-card-xgboost" id="xgboost-card"></div>
                 <div class="card model-card model-card-lstm" id="lstm-card"></div>
             </div>
 
@@ -193,7 +193,7 @@
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <h3>Improvement Over Baseline</h3>
+                        <h3>R² Score Ranking</h3>
                     </div>
                     <div class="chart-wrapper">
                         <canvas id="improvementChart"></canvas>

@@ -1,276 +1,305 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>EnergyPulse — Smart Energy Predictor</title>
-    <meta name="description" content="Predict energy consumption using a trained ML model. Input hour, day, and month to forecast power usage and estimated costs.">
+    <meta name="description"
+        content="Predict energy consumption using a trained ML model. Input hour, day, and month to forecast power usage and estimated costs.">
     <link rel="stylesheet" href="/static/css/predict.css">
 </head>
+
 <body>
 
-<div class="bg-grid"></div>
+    <div class="bg-grid"></div>
 
-<div class="container">
+    <div class="container">
 
-    <!-- Back link -->
-    <a href="/" class="back-link">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="M12 19l-7-7 7-7"/></svg>
-        Back to Dashboard
-    </a>
+        <!-- Back link -->
+        <a href="/" class="back-link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                stroke-linejoin="round">
+                <path d="M19 12H5" />
+                <path d="M12 19l-7-7 7-7" />
+            </svg>
+            Back to Dashboard
+        </a>
 
-    <!-- Header -->
-    <header class="header">
-        <div class="header-badge">
-            <span class="pulse-dot"></span>
-            <span>ML Model Active</span>
-        </div>
-        <h1>EnergyPulse</h1>
-        <p>Predict energy consumption in real time using our trained Linear Regression model</p>
-    </header>
+        <!-- Header -->
+        <header class="header">
+            <div class="header-badge">
+                <span class="pulse-dot"></span>
+                <span>ML Model Active</span>
+            </div>
+            <h1>EnergyPulse</h1>
+            <p>Predict energy consumption in real time using our trained Linear Regression model (R² = 0.9987)</p>
+        </header>
 
-    <!-- Main Grid -->
-    <div class="main-grid">
+        <!-- Main Grid -->
+        <div class="main-grid">
 
-        <!-- Input Card -->
-        <div class="card">
-            <div class="card-title">⚡ Smart Energy Predictor</div>
-            <div class="card-subtitle">Set the time parameters below and hit predict</div>
+            <!-- Input Card -->
+            <div class="card">
+                <div class="card-title">⚡ Smart Energy Predictor</div>
+                <div class="card-subtitle">Set the time parameters below and hit predict</div>
 
-            <form id="predictForm" onsubmit="return false;">
-                <!-- Hour Slider -->
-                <div class="form-group">
-                    <label class="form-label">
-                        <span class="icon">🕐</span> Hour of Day
-                    </label>
-                    <div class="slider-container">
-                        <span class="slider-value" id="hourDisplay">12:00</span>
-                        <input type="range" id="hourSlider" min="0" max="23" value="12"
-                               oninput="updateHourDisplay(this.value)">
-                        <div class="slider-labels">
-                            <span>00:00</span>
-                            <span>06:00</span>
-                            <span>12:00</span>
-                            <span>18:00</span>
-                            <span>23:00</span>
+                <form id="predictForm" onsubmit="return false;">
+                    <!-- Hour Slider -->
+                    <div class="form-group">
+                        <label class="form-label">
+                            <span class="icon">🕐</span> Hour of Day
+                        </label>
+                        <div class="slider-container">
+                            <span class="slider-value" id="hourDisplay">12:00</span>
+                            <input type="range" id="hourSlider" min="0" max="23" value="12"
+                                oninput="updateHourDisplay(this.value)">
+                            <div class="slider-labels">
+                                <span>00:00</span>
+                                <span>06:00</span>
+                                <span>12:00</span>
+                                <span>18:00</span>
+                                <span>23:00</span>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Day & Month Selects -->
-                <div class="form-group">
-                    <div class="select-grid">
-                        <div>
-                            <label class="form-label">
-                                <span class="icon">📅</span> Day
-                            </label>
-                            <select id="daySelect"></select>
-                        </div>
-                        <div>
-                            <label class="form-label">
-                                <span class="icon">📆</span> Month
-                            </label>
-                            <select id="monthSelect"></select>
+                    <!-- Day & Month Selects -->
+                    <div class="form-group">
+                        <div class="select-grid">
+                            <div>
+                                <label class="form-label">
+                                    <span class="icon">📅</span> Day
+                                </label>
+                                <select id="daySelect"></select>
+                            </div>
+                            <div>
+                                <label class="form-label">
+                                    <span class="icon">📆</span> Month
+                                </label>
+                                <select id="monthSelect"></select>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Predict Button -->
-                <button type="button" class="predict-btn" id="predictBtn" onclick="predict()">
-                    <span class="btn-text">⚡ Predict Consumption</span>
-                </button>
-            </form>
-        </div>
-
-        <!-- Results Card -->
-        <div class="card results-card">
-            <div class="card-title">📊 Prediction Results</div>
-            <div class="card-subtitle">Forecasted energy metrics will appear here</div>
-
-            <!-- Placeholder -->
-            <div class="result-placeholder" id="placeholder">
-                <div class="icon-large">🔮</div>
-                <p>Select time parameters and click <strong>Predict</strong> to see live results</p>
+                    <!-- Predict Button -->
+                    <button type="button" class="predict-btn" id="predictBtn" onclick="predict()">
+                        <span class="btn-text">⚡ Predict Consumption</span>
+                    </button>
+                </form>
             </div>
 
-            <!-- Results -->
-            <div class="results-content" id="results">
-                <!-- Power Display -->
-                <div class="power-display">
-                    <div class="power-label">Predicted Power</div>
-                    <div class="power-value">
-                        <span id="powerValue">0.00</span>
-                        <span class="power-unit">kW</span>
-                    </div>
-                    <div class="power-comparison">
-                        <span style="color: var(--text-muted);">vs avg:</span>
-                        <span class="comparison-badge" id="compBadge">—</span>
-                    </div>
+            <!-- Results Card -->
+            <div class="card results-card">
+                <div class="card-title">📊 Prediction Results</div>
+                <div class="card-subtitle">Forecasted energy metrics will appear here</div>
+
+                <!-- Placeholder -->
+                <div class="result-placeholder" id="placeholder">
+                    <div class="icon-large">🔮</div>
+                    <p>Select time parameters and click <strong>Predict</strong> to see live results</p>
                 </div>
 
-                <!-- Metrics -->
-                <div class="metrics-grid">
-                    <div class="metric-card">
-                        <div class="metric-icon">📊</div>
-                        <div class="metric-value" id="dailyKwh">—</div>
-                        <div class="metric-label">Daily kWh</div>
+                <!-- Results -->
+                <div class="results-content" id="results">
+                    <!-- Power Display -->
+                    <div class="power-display">
+                        <div class="power-label">Predicted Power</div>
+                        <div class="power-value">
+                            <span id="powerValue">0.00</span>
+                            <span class="power-unit">kW</span>
+                        </div>
+                        <div class="power-comparison">
+                            <span style="color: var(--text-muted);">vs avg:</span>
+                            <span class="comparison-badge" id="compBadge">—</span>
+                        </div>
                     </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">📈</div>
-                        <div class="metric-value" id="monthlyKwh">—</div>
-                        <div class="metric-label">Monthly kWh</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">💰</div>
-                        <div class="metric-value" id="dailyCost">—</div>
-                        <div class="metric-label">Daily Cost</div>
-                    </div>
-                    <div class="metric-card">
-                        <div class="metric-icon">🏦</div>
-                        <div class="metric-value" id="monthlyCost">—</div>
-                        <div class="metric-label">Monthly Cost</div>
-                    </div>
-                </div>
 
-                <!-- Tip -->
-                <div class="tip-box">
-                    <div class="tip-icon">💡</div>
-                    <div>
-                        <div class="tip-label">Energy Saving Tip</div>
-                        <div class="tip-text" id="tipText">—</div>
+                    <!-- Metrics -->
+                    <div class="metrics-grid">
+                        <div class="metric-card">
+                            <div class="metric-icon">📊</div>
+                            <div class="metric-value" id="dailyKwh">—</div>
+                            <div class="metric-label">Daily kWh</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">📈</div>
+                            <div class="metric-value" id="monthlyKwh">—</div>
+                            <div class="metric-label">Monthly kWh</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">💰</div>
+                            <div class="metric-value" id="dailyCost">—</div>
+                            <div class="metric-label">Daily Cost</div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">🏦</div>
+                            <div class="metric-value" id="monthlyCost">—</div>
+                            <div class="metric-label">Monthly Cost</div>
+                        </div>
+                    </div>
+
+                    <!-- Tip -->
+                    <div class="tip-box">
+                        <div class="tip-icon">💡</div>
+                        <div>
+                            <div class="tip-label">Energy Saving Tip</div>
+                            <div class="tip-text" id="tipText">—</div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Bottom Stats -->
+        <div class="bottom-stats">
+            <div class="stat-card">
+                <div class="stat-icon">🧠</div>
+                <div class="stat-value" id="statFeatures">25</div>
+                <div class="stat-label">Trained Features</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">📐</div>
+                <div class="stat-value" id="statR2">0.9987</div>
+                <div class="stat-label">R² Score</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⚙️</div>
+                <div class="stat-value" id="statModel">LR</div>
+                <div class="stat-label">Active Model</div>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Bottom Stats -->
-    <div class="bottom-stats">
-        <div class="stat-card">
-            <div class="stat-icon">🧠</div>
-            <div class="stat-value">23</div>
-            <div class="stat-label">Trained Features</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">📐</div>
-            <div class="stat-value">0.81</div>
-            <div class="stat-label">R² Score</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-icon">⚙️</div>
-            <div class="stat-value">LR</div>
-            <div class="stat-label">Active Model</div>
-        </div>
-    </div>
+    <script>
+        /* ── Populate Selects ──────────────────────────────────────────── */
+        (function () {
+            const daySelect = document.getElementById('daySelect');
+            const monthSelect = document.getElementById('monthSelect');
+            const months = ['January', 'February', 'March', 'April', 'May', 'June',
+                'July', 'August', 'September', 'October', 'November', 'December'];
 
-</div>
+            for (let d = 1; d <= 31; d++) {
+                const opt = document.createElement('option');
+                opt.value = d; opt.textContent = d;
+                if (d === 15) opt.selected = true;
+                daySelect.appendChild(opt);
+            }
 
-<script>
-/* ── Populate Selects ──────────────────────────────────────────── */
-(function() {
-    const daySelect = document.getElementById('daySelect');
-    const monthSelect = document.getElementById('monthSelect');
-    const months = ['January','February','March','April','May','June',
-                    'July','August','September','October','November','December'];
+            months.forEach((m, i) => {
+                const opt = document.createElement('option');
+                opt.value = i + 1; opt.textContent = m;
+                if (i + 1 === 6) opt.selected = true;
+                monthSelect.appendChild(opt);
+            });
+        })();
 
-    for (let d = 1; d <= 31; d++) {
-        const opt = document.createElement('option');
-        opt.value = d; opt.textContent = d;
-        if (d === 15) opt.selected = true;
-        daySelect.appendChild(opt);
-    }
-
-    months.forEach((m, i) => {
-        const opt = document.createElement('option');
-        opt.value = i + 1; opt.textContent = m;
-        if (i + 1 === 6) opt.selected = true;
-        monthSelect.appendChild(opt);
-    });
-})();
-
-/* ── Hour Display ──────────────────────────────────────────────── */
-function updateHourDisplay(val) {
-    const h = parseInt(val);
-    document.getElementById('hourDisplay').textContent =
-        h.toString().padStart(2, '0') + ':00';
-}
-
-/* ── Predict ───────────────────────────────────────────────────── */
-async function predict() {
-    const btn = document.getElementById('predictBtn');
-    btn.classList.add('loading');
-    btn.querySelector('.btn-text').textContent = '⏳ Predicting…';
-
-    const payload = {
-        hour: parseInt(document.getElementById('hourSlider').value),
-        day: parseInt(document.getElementById('daySelect').value),
-        month: parseInt(document.getElementById('monthSelect').value),
-    };
-
-    try {
-        const res = await fetch('/api/predict', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(payload),
-        });
-
-        const data = await res.json();
-        if (data.error) throw new Error(data.error);
-
-        // Show results
-        document.getElementById('placeholder').style.display = 'none';
-        document.getElementById('results').classList.add('visible');
-
-        // Power
-        animateValue('powerValue', data.predicted_power, 4);
-
-        // Metrics
-        document.getElementById('dailyKwh').textContent = data.daily_kwh.toFixed(1);
-        document.getElementById('monthlyKwh').textContent = data.monthly_kwh.toFixed(0);
-        document.getElementById('dailyCost').textContent = data.currency + data.daily_cost.toFixed(1);
-        document.getElementById('monthlyCost').textContent = data.currency + data.monthly_cost.toFixed(0);
-
-        // Comparison badge
-        const badge = document.getElementById('compBadge');
-        const pct = data.pct_diff;
-        if (pct > 0) {
-            badge.className = 'comparison-badge above';
-            badge.textContent = '▲ ' + Math.abs(pct).toFixed(1) + '% above avg';
-        } else {
-            badge.className = 'comparison-badge below';
-            badge.textContent = '▼ ' + Math.abs(pct).toFixed(1) + '% below avg';
+        /* ── Hour Display ──────────────────────────────────────────────── */
+        function updateHourDisplay(val) {
+            const h = parseInt(val);
+            document.getElementById('hourDisplay').textContent =
+                h.toString().padStart(2, '0') + ':00';
         }
 
-        // Tip
-        document.getElementById('tipText').textContent = data.tip;
+        /* ── Predict ───────────────────────────────────────────────────── */
+        async function predict() {
+            const btn = document.getElementById('predictBtn');
+            btn.classList.add('loading');
+            btn.querySelector('.btn-text').textContent = '⏳ Predicting…';
 
-    } catch (err) {
-        alert('Prediction failed: ' + err.message);
-    } finally {
-        btn.classList.remove('loading');
-        btn.querySelector('.btn-text').textContent = '⚡ Predict Consumption';
-    }
-}
+            const payload = {
+                hour: parseInt(document.getElementById('hourSlider').value),
+                day: parseInt(document.getElementById('daySelect').value),
+                month: parseInt(document.getElementById('monthSelect').value),
+            };
 
-/* ── Animate number ────────────────────────────────────────────── */
-function animateValue(id, end, decimals) {
-    const el = document.getElementById(id);
-    const start = parseFloat(el.textContent) || 0;
-    const duration = 600;
-    const startTime = performance.now();
+            try {
+                const res = await fetch('/api/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload),
+                });
 
-    function tick(now) {
-        const elapsed = now - startTime;
-        const progress = Math.min(elapsed / duration, 1);
-        const eased = 1 - Math.pow(1 - progress, 3);
-        const current = start + (end - start) * eased;
-        el.textContent = current.toFixed(decimals);
-        if (progress < 1) requestAnimationFrame(tick);
-    }
+                const data = await res.json();
+                if (data.error) throw new Error(data.error);
 
-    requestAnimationFrame(tick);
-}
-</script>
+                // Show results
+                document.getElementById('placeholder').style.display = 'none';
+                document.getElementById('results').classList.add('visible');
+
+                // Power
+                animateValue('powerValue', data.predicted_power, 4);
+
+                // Metrics
+                document.getElementById('dailyKwh').textContent = data.daily_kwh.toFixed(1);
+                document.getElementById('monthlyKwh').textContent = data.monthly_kwh.toFixed(0);
+                document.getElementById('dailyCost').textContent = data.currency + data.daily_cost.toFixed(1);
+                document.getElementById('monthlyCost').textContent = data.currency + data.monthly_cost.toFixed(0);
+
+                // Comparison badge
+                const badge = document.getElementById('compBadge');
+                const pct = data.pct_diff;
+                if (pct > 0) {
+                    badge.className = 'comparison-badge above';
+                    badge.textContent = '▲ ' + Math.abs(pct).toFixed(1) + '% above avg';
+                } else {
+                    badge.className = 'comparison-badge below';
+                    badge.textContent = '▼ ' + Math.abs(pct).toFixed(1) + '% below avg';
+                }
+
+                // Tip
+                document.getElementById('tipText').textContent = data.tip;
+
+            } catch (err) {
+                alert('Prediction failed: ' + err.message);
+            } finally {
+                btn.classList.remove('loading');
+                btn.querySelector('.btn-text').textContent = '⚡ Predict Consumption';
+            }
+        }
+
+        /* ── Animate number ────────────────────────────────────────────── */
+        function animateValue(id, end, decimals) {
+            const el = document.getElementById(id);
+            const start = parseFloat(el.textContent) || 0;
+            const duration = 600;
+            const startTime = performance.now();
+
+            function tick(now) {
+                const elapsed = now - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = start + (end - start) * eased;
+                el.textContent = current.toFixed(decimals);
+                if (progress < 1) requestAnimationFrame(tick);
+            }
+
+            requestAnimationFrame(tick);
+        }
+
+        /* ── Load dynamic stats from API ──────────────────────────────── */
+        (async function loadStats() {
+            try {
+                const res = await fetch('/api/model-comparison');
+                const data = await res.json();
+                // Find best model
+                const models = [data.baseline, data.xgboost, data.lstm].filter(Boolean);
+                const best = models.reduce((a, b) => a.r2 > b.r2 ? a : b);
+                const featureRes = await fetch('/api/overview');
+                const overview = await featureRes.json();
+
+                document.getElementById('statFeatures').textContent = overview.features_engineered || '25';
+                document.getElementById('statR2').textContent = best.r2;
+                // Show short name
+                const shortNames = { 'Linear Regression': 'LR', 'XGBoost': 'XGB', 'LSTM Neural Network': 'LSTM' };
+                document.getElementById('statModel').textContent = shortNames[best.name] || best.name;
+            } catch (e) {
+                console.warn('Could not load model stats:', e);
+            }
+        })();
+    </script>
 
 </body>
+
 </html>

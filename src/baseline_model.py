@@ -1,6 +1,8 @@
 """
 SMART ENERGY CONSUMPTION ANALYSIS - MILESTONE 2: BASELINE MODEL
 =================================================================================
+Trains both Linear Regression and XGBoost models for comparison.
+=================================================================================
 """
 
 import pandas as pd
@@ -45,7 +47,6 @@ def prepare_data(df, target_col='Global_active_power'):
     exclude_cols = [target_col, 'Sub_metering_1', 'Sub_metering_2', 'Sub_metering_3']
     
     # CRITICAL: Exclude ALL leaky features to prevent data leakage
-    # Leaky features are those that depend on future or current target values
     leaky_patterns = [
         '_lag_',           # All lag features of target
         '_rolling_',       # All rolling window features of target
@@ -77,7 +78,7 @@ def prepare_data(df, target_col='Global_active_power'):
     feature_columns = list(X.columns)
     
     print(f"   Final feature count: {len(feature_columns)}")
-    if len(feature_columns) <= 10:
+    if len(feature_columns) <= 30:
         print(f"   Features: {feature_columns}")
     
     train_size = int(0.7 * len(df))
@@ -113,32 +114,99 @@ def evaluate_model(y_true, y_pred, name):
 
 
 def train_and_evaluate(X_train, y_train, X_val, y_val, X_test, y_test, feature_columns):
+    # --- Linear Regression ---
     print("\n[TRAIN] Training Linear Regression...")
     lr_model = LinearRegression()
     lr_model.fit(X_train, y_train)
     joblib.dump(lr_model, os.path.join(MODELS_DIR, 'linear_regression_model.pkl'))
     
-    y_train_pred = lr_model.predict(X_train)
-    y_val_pred = lr_model.predict(X_val)
-    y_test_pred = lr_model.predict(X_test)
+    y_train_pred_lr = lr_model.predict(X_train)
+    y_val_pred_lr = lr_model.predict(X_val)
+    y_test_pred_lr = lr_model.predict(X_test)
     
-    print("\n[EVAL] Metrics:")
-    train_m = evaluate_model(y_train, y_train_pred, "Train")
-    val_m = evaluate_model(y_val, y_val_pred, "Val")
-    test_m = evaluate_model(y_test, y_test_pred, "Test")
+    print("\n[EVAL] Linear Regression Metrics:")
+    train_m_lr = evaluate_model(y_train, y_train_pred_lr, "Train")
+    val_m_lr = evaluate_model(y_val, y_val_pred_lr, "Val")
+    test_m_lr = evaluate_model(y_test, y_test_pred_lr, "Test")
     
     feat_imp = pd.DataFrame({'Feature': feature_columns, 'Importance': np.abs(lr_model.coef_)})
     feat_imp = feat_imp.sort_values('Importance', ascending=False)
     feat_imp.to_csv(os.path.join(PROCESSED_DIR, 'feature_importance.csv'), index=False)
     
-    return (lr_model, y_train, y_train_pred, y_val, y_val_pred, y_test, y_test_pred, train_m, val_m, test_m, feat_imp)
+    # --- XGBoost ---
+    print("\n[TRAIN] Training XGBoost...")
+    try:
+        from xgboost import XGBRegressor
+        xgb_model = XGBRegressor(
+            n_estimators=500,
+            max_depth=8,
+            learning_rate=0.05,
+            subsample=0.8,
+            colsample_bytree=0.8,
+            reg_alpha=0.1,
+            reg_lambda=1.0,
+            random_state=42,
+            early_stopping_rounds=30,
+            verbosity=0
+        )
+        xgb_model.fit(X_train, y_train, eval_set=[(X_val, y_val)], verbose=False)
+        joblib.dump(xgb_model, os.path.join(MODELS_DIR, 'xgboost_model.pkl'))
+        
+        y_train_pred_xgb = xgb_model.predict(X_train)
+        y_val_pred_xgb = xgb_model.predict(X_val)
+        y_test_pred_xgb = xgb_model.predict(X_test)
+        
+        print("\n[EVAL] XGBoost Metrics:")
+        train_m_xgb = evaluate_model(y_train, y_train_pred_xgb, "Train")
+        val_m_xgb = evaluate_model(y_val, y_val_pred_xgb, "Val")
+        test_m_xgb = evaluate_model(y_test, y_test_pred_xgb, "Test")
+        
+        # XGBoost feature importance
+        xgb_feat_imp = pd.DataFrame({
+            'Feature': feature_columns, 
+            'Importance': xgb_model.feature_importances_
+        }).sort_values('Importance', ascending=False)
+        xgb_feat_imp.to_csv(os.path.join(PROCESSED_DIR, 'feature_importance_xgb.csv'), index=False)
+        
+        has_xgb = True
+    except ImportError:
+        print("   [WARN] XGBoost not installed. Skipping. Install with: pip install xgboost")
+        has_xgb = False
+        train_m_xgb = val_m_xgb = test_m_xgb = None
+        y_train_pred_xgb = y_val_pred_xgb = y_test_pred_xgb = None
+        xgb_feat_imp = None
+    
+    # Pick best model for visualization
+    if has_xgb and test_m_xgb['R2'] > test_m_lr['R2']:
+        print("\n   [WINNER] XGBoost is the better baseline model!")
+        best_name = 'XGBoost'
+        train_m = train_m_xgb
+        val_m = val_m_xgb
+        test_m = test_m_xgb
+        y_train_pred = y_train_pred_xgb
+        y_val_pred = y_val_pred_xgb
+        y_test_pred = y_test_pred_xgb
+        best_feat_imp = xgb_feat_imp
+    else:
+        best_name = 'Linear Regression'
+        train_m = train_m_lr
+        val_m = val_m_lr
+        test_m = test_m_lr
+        y_train_pred = y_train_pred_lr
+        y_val_pred = y_val_pred_lr
+        y_test_pred = y_test_pred_lr
+        best_feat_imp = feat_imp
+    
+    return (best_name, y_train, y_train_pred, y_val, y_val_pred, y_test, y_test_pred, 
+            train_m, val_m, test_m, best_feat_imp,
+            test_m_lr, test_m_xgb if has_xgb else None)
 
 
 def generate_visualization(y_train, y_train_pred, y_val, y_val_pred, y_test, y_test_pred, 
-                          train_m, val_m, test_m, feat_imp):
+                          train_m, val_m, test_m, feat_imp, best_name='Baseline'):
     print("\n[VIZ] Generating visualization...")
     fig = plt.figure(figsize=(20, 14))
-    fig.suptitle('MILESTONE 2 - BASELINE MODEL (LINEAR REGRESSION)', fontsize=18, fontweight='bold', y=0.995)
+    fig.suptitle(f'MILESTONE 2 - BASELINE MODEL ({best_name.upper()})', fontsize=18, fontweight='bold', y=0.995)
     gs = fig.add_gridspec(3, 3, hspace=0.35, wspace=0.3)
     
     # Scatter plots
@@ -190,8 +258,8 @@ def generate_visualization(y_train, y_train_pred, y_val, y_val_pred, y_test, y_t
     # Feature importance
     ax7 = fig.add_subplot(gs[2, 2])
     top10 = feat_imp.head(10).sort_values('Importance')
-    ax7.barh(range(10), top10['Importance'].values, color=plt.cm.RdYlGn(np.linspace(0.3, 0.9, 10)))
-    ax7.set_yticks(range(10))
+    ax7.barh(range(len(top10)), top10['Importance'].values, color=plt.cm.RdYlGn(np.linspace(0.3, 0.9, len(top10))))
+    ax7.set_yticks(range(len(top10)))
     ax7.set_yticklabels([n[:25] for n in top10['Feature']], fontsize=8)
     ax7.set_title('Top 10 Features', fontweight='bold')
     ax7.grid(axis='x', alpha=0.3)
@@ -209,12 +277,23 @@ def main():
     df = load_feature_data()
     X_train, y_train, X_val, y_val, X_test, y_test, features = prepare_data(df)
     results = train_and_evaluate(X_train, y_train, X_val, y_val, X_test, y_test, features)
-    generate_visualization(*results[1:])
+    
+    best_name = results[0]
+    generate_visualization(results[1], results[2], results[3], results[4], results[5], results[6],
+                          results[7], results[8], results[9], results[10], best_name)
     
     test_m = results[9]
+    lr_test = results[11]
+    xgb_test = results[12]
+    
     print("\n" + "=" * 80)
     print("[OK] BASELINE MODEL COMPLETED!")
     print("=" * 80)
+    if lr_test:
+        print(f"Linear Regression Test: MAE={lr_test['MAE']:.4f}, RMSE={lr_test['RMSE']:.4f}, R2={lr_test['R2']:.4f}")
+    if xgb_test:
+        print(f"XGBoost Test:           MAE={xgb_test['MAE']:.4f}, RMSE={xgb_test['RMSE']:.4f}, R2={xgb_test['R2']:.4f}")
+    print(f"\nBest Baseline: {best_name}")
     print(f"Test: MAE={test_m['MAE']:.4f}, RMSE={test_m['RMSE']:.4f}, R2={test_m['R2']:.4f}")
     return test_m
 
