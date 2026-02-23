@@ -1,0 +1,22 @@
+# Core
+flask==3.0.0
+flask-cors==4.0.0
+python-dotenv==1.0.0
+werkzeug==3.0.1
+
+# Data Processing
+pandas==2.0.3
+numpy==1.24.3
+
+# ML - Using sklearn only (no TensorFlow issues)
+scikit-learn==1.3.0
+xgboost==2.0.3
+joblib==1.3.2
+
+# Visualization
+matplotlib==3.7.2
+seaborn==0.12.2
+
+# Utilities
+pytz==2023.3
+requests==2.31.0

@@ -33,5 +33,23 @@
     "HiFi": "Entertainment",
     "Kettle": "Cooking",
     "Overhead_Fan": "Climate"
+=======
+    "Sub_metering_1": "Kitchen",
+    "Sub_metering_2": "Laundry",
+    "Sub_metering_3": "Climate_Control",
+    "Sub_metering_4": "Other_Appliances"
+  },
+  "device_rooms": {
+    "Aggregate": "Whole_House",
+    "Kitchen": "Kitchen",
+    "Laundry": "Utility",
+    "Climate_Control": "HVAC",
+    "Other_Appliances": "Mixed"
+  },
+  "device_descriptions": {
+    "Kitchen": "Dishwasher, oven, microwave, hot-plates",
+    "Laundry": "Washing machine, tumble-dryer, refrigerator, light",
+    "Climate_Control": "Electric water-heater, air-conditioner",
+    "Other_Appliances": "All other unmeasured appliances"
   }
 }

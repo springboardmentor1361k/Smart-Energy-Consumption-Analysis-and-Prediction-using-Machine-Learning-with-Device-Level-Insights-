@@ -1,0 +1,33 @@
+{
+  "feature_cols": [
+    "Kitchen",
+    "Laundry",
+    "Climate_Control",
+    "Other_Appliances",
+    "is_weekend",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_peak",
+    "is_night",
+    "Agg_lag1h",
+    "Agg_lag2h",
+    "Agg_lag3h",
+    "Agg_lag6h",
+    "Agg_lag12h",
+    "Agg_lag24h",
+    "Agg_roll_mean_3h",
+    "Agg_roll_mean_6h",
+    "Agg_roll_mean_24h",
+    "Agg_roll_std_24h"
+  ],
+  "target_col": "Aggregate",
+  "device_cols": [
+    "Aggregate",
+    "Kitchen",
+    "Laundry",
+    "Climate_Control",
+    "Other_Appliances"
+  ]
+}

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Devices - Smart Energy{% endblock %}
+{% block page_title %}Device Analysis{% endblock %}
+
+{% block extra_css %}
+<style>
+    .devices-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .device-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; }
+    .device-name { font-size: 18px; font-weight: 600; margin-bottom: 15px; }
+    .device-stat { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); }
+    .device-stat:last-child { border-bottom: none; }
+    .device-stat-label { color: var(--text-secondary); }
+    .device-stat-value { font-weight: 600; }
+    .room-badge { padding: 4px 10px; border-radius: 6px; font-size: 12px; background: rgba(59,130,246,0.2); color: #93c5fd; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="devices-grid">
+    {% for device in device_stats %}
+    <div class="device-card">
+        <div class="device-name">{{ device.name }}</div>
+        <span class="room-badge">{{ device.room }}</span>
+        <div style="margin-top: 20px;">
+            <div class="device-stat">
+                <span class="device-stat-label">Total Consumption</span>
+                <span class="device-stat-value">{{ device.total_kwh }} kWh</span>
+            </div>
+            <div class="device-stat">
+                <span class="device-stat-label">Share</span>
+                <span class="device-stat-value">{{ device.percentage }}%</span>
+            </div>
+            <div class="device-stat">
+                <span class="device-stat-label">Average Power</span>
+                <span class="device-stat-value">{{ device.avg_power }} W</span>
+            </div>
+            <div class="device-stat">
+                <span class="device-stat-label">Peak Power</span>
+                <span class="device-stat-value">{{ device.max_power }} W</span>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <p>No device data available.</p>
+    {% endfor %}
+</div>
+{% endblock %}

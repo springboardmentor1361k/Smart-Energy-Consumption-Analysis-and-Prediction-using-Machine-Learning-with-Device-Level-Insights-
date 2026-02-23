@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
@@ -205,3 +206,37 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+=======
+# Virtual environment
+venv/
+env/
+.venv/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Data files
+data/raw/*.txt
+data/raw/*.zip
+*.csv
+
+# Models
+*.pkl
+*.h5
+*.keras
+
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+>>>>>>> 86be1b6 (Initial commit: Complete Smart Energy Consumption Analysis and Prediction Project with Device-Level Insights - Machine Learning with Device-Level Insights)

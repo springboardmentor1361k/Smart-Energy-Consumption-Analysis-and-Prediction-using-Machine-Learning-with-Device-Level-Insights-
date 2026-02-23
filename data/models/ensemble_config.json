@@ -1,0 +1,39 @@
+{
+  "xgb_weight": 1.0,
+  "lstm_weight": 0.0,
+  "seq_length": 24,
+  "n_features": 21,
+  "feature_cols": [
+    "Kitchen",
+    "Laundry",
+    "Climate_Control",
+    "Other_Appliances",
+    "is_weekend",
+    "hour_sin",
+    "hour_cos",
+    "dow_sin",
+    "dow_cos",
+    "is_peak",
+    "is_night",
+    "Agg_lag1h",
+    "Agg_lag2h",
+    "Agg_lag3h",
+    "Agg_lag6h",
+    "Agg_lag12h",
+    "Agg_lag24h",
+    "Agg_roll_mean_3h",
+    "Agg_roll_mean_6h",
+    "Agg_roll_mean_24h",
+    "Agg_roll_std_24h"
+  ],
+  "xgb_metrics": {
+    "MAE": 15.527199601765266,
+    "RMSE": 26.64229945068296,
+    "R2": 0.9985908528724619
+  },
+  "lr_metrics": {
+    "MAE": 0.02768454504430931,
+    "RMSE": 0.07824857604568175,
+    "R2": 0.9999999878446962
+  }
+}

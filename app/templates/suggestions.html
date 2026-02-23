@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Suggestions - Smart Energy{% endblock %}
+{% block page_title %}Smart Suggestions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .summary-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid var(--border-color); border-radius: 16px; padding: 30px; margin-bottom: 30px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 30px; text-align: center; }
+    .summary-value { font-size: 32px; font-weight: 700; color: #10b981; }
+    .summary-label { font-size: 13px; color: var(--text-secondary); margin-top: 5px; }
+    .suggestion-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 24px; margin-bottom: 15px; border-left: 4px solid #3b82f6; }
+    .suggestion-card.high { border-left-color: #ef4444; }
+    .suggestion-card.medium { border-left-color: #f59e0b; }
+    .suggestion-card.low { border-left-color: #10b981; }
+    .suggestion-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .suggestion-title { font-size: 16px; font-weight: 600; }
+    .priority-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; }
+    .priority-badge.High { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .priority-badge.Medium { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .priority-badge.Low { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .suggestion-type { font-size: 13px; color: var(--accent-blue); margin-bottom: 10px; }
+    .suggestion-message { color: var(--text-secondary); margin-bottom: 15px; line-height: 1.6; }
+    .suggestion-action { background: rgba(16,185,129,0.1); padding: 12px 16px; border-radius: 8px; font-size: 13px; color: #6ee7b7; }
+    .suggestion-savings { margin-top: 15px; display: flex; gap: 20px; font-size: 14px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="summary-card">
+    <h3 style="margin-bottom: 25px;">💡 Potential Savings Summary</h3>
+    <div class="summary-grid">
+        <div><div class="summary-value">{{ report.summary.total_potential_savings_kwh }}</div><div class="summary-label">kWh Saveable</div></div>
+        <div><div class="summary-value">£{{ report.summary.total_potential_savings_cost }}</div><div class="summary-label">Cost Savings</div></div>
+        <div><div class="summary-value">{{ report.summary.total_potential_co2_savings }}</div><div class="summary-label">kg CO₂ Reducible</div></div>
+        <div><div class="summary-value">{{ report.summary.suggestions_count }}</div><div class="summary-label">Suggestions</div></div>
+    </div>
+</div>
+
+{% for s in report.suggestions %}
+<div class="suggestion-card {{ s.priority | lower }}">
+    <div class="suggestion-header">
+        <span class="suggestion-title">{{ s.icon }} {{ s.title }}</span>
+        <span class="priority-badge {{ s.priority }}">{{ s.priority }}</span>
+    </div>
+    <div class="suggestion-type">{{ s.type }}</div>
+    <div class="suggestion-message">{{ s.message }}</div>
+    <div class="suggestion-action">💡 {{ s.action }}</div>
+    <div class="suggestion-savings">
+        <span>⚡ {{ s.potential_savings_kwh }} kWh</span>
+        <span>💷 £{{ s.potential_savings_cost }}</span>
+    </div>
+</div>
+{% else %}
+<p>No suggestions available. Your energy usage looks optimized!</p>
+{% endfor %}
+{% endblock %}

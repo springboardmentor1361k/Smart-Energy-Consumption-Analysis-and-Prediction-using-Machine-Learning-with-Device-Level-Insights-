@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Reports - Smart Energy{% endblock %}
+{% block page_title %}Reports & Export{% endblock %}
+
+{% block extra_css %}
+<style>
+    .export-buttons { display: flex; gap: 15px; margin-bottom: 30px; flex-wrap: wrap; }
+    .export-btn { display: flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 10px; font-size: 14px; text-decoration: none; transition: all 0.3s; }
+    .export-btn.csv { background: rgba(16,185,129,0.2); color: #6ee7b7; }
+    .export-btn:hover { transform: translateY(-3px); }
+    .report-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; overflow: hidden; margin-bottom: 25px; }
+    .report-header { padding: 20px 24px; border-bottom: 1px solid var(--border-color); font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+    .report-header i { color: var(--accent-blue); }
+    .report-content { padding: 24px; }
+    .stat-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+    .stat-row:last-child { border-bottom: none; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="export-buttons">
+    <a href="{{ url_for('download_report', report_type='csv') }}" class="export-btn csv"><i class="fas fa-file-csv"></i> Download CSV</a>
+</div>
+
+<div class="report-card">
+    <div class="report-header"><i class="fas fa-pound-sign"></i> Cost Analysis</div>
+    <div class="report-content">
+        <div class="stat-row"><span>Total Cost (30 days)</span><span>£{{ cost_data.totals.total_cost }}</span></div>
+        <div class="stat-row"><span>Daily Average</span><span>£{{ cost_data.averages.daily_cost }}</span></div>
+        <div class="stat-row"><span>Energy Used</span><span>{{ cost_data.totals.energy_kwh }} kWh</span></div>
+    </div>
+</div>
+
+<div class="report-card">
+    <div class="report-header"><i class="fas fa-leaf"></i> Carbon Footprint</div>
+    <div class="report-content">
+        <div class="stat-row"><span>Total Emissions (30 days)</span><span>{{ emissions_data.totals.emissions_kg }} kg CO₂</span></div>
+        <div class="stat-row"><span>Projected Annual</span><span>{{ emissions_data.projections.annual_emissions_tonnes }} tonnes</span></div>
+        <div class="stat-row"><span>Rating</span><span style="color: {% if emissions_comparison.color == 'green' %}#10b981{% elif emissions_comparison.color == 'red' %}#ef4444{% else %}#f59e0b{% endif %};">{{ emissions_comparison.rating }}</span></div>
+        <div class="stat-row"><span>Equivalent Car Miles</span><span>{{ emissions_data.equivalents.car_miles }}</span></div>
+    </div>
+</div>
+{% endblock %}

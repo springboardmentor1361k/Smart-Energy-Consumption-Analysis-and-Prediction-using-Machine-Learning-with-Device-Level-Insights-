@@ -1,0 +1,630 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real-Time Smart Energy</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #0a0a0f;
+            --card: #151520;
+            --accent: #00d4aa;
+            --warning: #ff6b6b;
+            --info: #4ecdc4;
+        }
+        
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: var(--bg);
+            color: #fff;
+            min-height: 100vh;
+        }
+        
+        /* Live indicator */
+        .live-pulse {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(0, 212, 170, 0.1);
+            border: 1px solid var(--accent);
+            border-radius: 30px;
+            z-index: 1000;
+        }
+        
+        .pulse-dot {
+            width: 10px;
+            height: 10px;
+            background: var(--accent);
+            border-radius: 50%;
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+        
+        /* Header */
+        header {
+            padding: 30px;
+            border-bottom: 1px solid #333;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, var(--accent), var(--info));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Main Grid */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            gap: 20px;
+            padding: 20px;
+        }
+        
+        /* Live Metrics Panel */
+        .metrics-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .metric-card {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #333;
+            transition: all 0.3s;
+        }
+        
+        .metric-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        
+        .metric-label {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 10px 0;
+            font-family: 'SF Mono', monospace;
+        }
+        
+        .metric-value.energy { color: var(--accent); }
+        .metric-value.cost { color: #ffd93d; }
+        .metric-value.carbon { color: #ff6b6b; }
+        
+        .metric-change {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .metric-change.up { color: #ff6b6b; }
+        .metric-change.down { color: var(--accent); }
+        
+        /* Center Chart Area */
+        .chart-area {
+            background: var(--card);
+            border-radius: 16px;
+            padding: 20px;
+            border: 1px solid #333;
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .time-range {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .time-btn {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid #444;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .time-btn:hover, .time-btn.active {
+            background: var(--accent);
+            border-color: var(--accent);
+        }
+        
+        #mainChart {
+            height: 400px;
+        }
+        
+        /* Right Panel - Live Feed */
+        .live-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .panel-header {
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 15px 20px;
+            background: var(--card);
+            border-radius: 12px;
+            border: 1px solid #333;
+        }
+        
+        .feed-container {
+            background: var(--card);
+            border-radius: 16px;
+            border: 1px solid #333;
+            overflow: hidden;
+            flex: 1;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        .feed-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid #222;
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        .feed-time {
+            font-size: 0.75rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .feed-content {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .feed-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .feed-icon.spike { background: rgba(255, 107, 107, 0.2); color: #ff6b6b; }
+        .feed-icon.tip { background: rgba(0, 212, 170, 0.2); color: var(--accent); }
+        .feed-icon.alert { background: rgba(255, 217, 61, 0.2); color: #ffd93d; }
+        
+        /* Smart Suggestion Banner */
+        .smart-banner {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(90deg, var(--accent), var(--info));
+            padding: 20px 40px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 20px 60px rgba(0, 212, 170, 0.3);
+            animation: bannerSlide 0.5s ease;
+            max-width: 800px;
+        }
+        
+        @keyframes bannerSlide {
+            from { transform: translateX(-50%) translateY(100px); opacity: 0; }
+            to { transform: translateX(-50%) translateY(0); opacity: 1; }
+        }
+        
+        .smart-banner.hidden {
+            display: none;
+        }
+        
+        .banner-icon {
+            font-size: 2rem;
+        }
+        
+        .banner-content h4 {
+            margin-bottom: 5px;
+        }
+        
+        .banner-content p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .banner-action {
+            padding: 10px 20px;
+            background: rgba(255,255,255,0.2);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        /* Device Breakdown */
+        .device-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .device-item {
+            background: rgba(255,255,255,0.03);
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .device-name {
+            font-size: 0.85rem;
+            color: #888;
+        }
+        
+        .device-value {
+            font-weight: 600;
+            color: var(--accent);
+        }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            .live-panel {
+                order: -1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Live Indicator -->
+    <div class="live-pulse">
+        <div class="pulse-dot"></div>
+        <span>LIVE</span>
+        <span id="connectionStatus">Connected</span>
+    </div>
+    
+    <!-- Header -->
+    <header>
+        <h1><i class="fas fa-bolt"></i> Real-Time Energy Monitor</h1>
+        <p style="color: #888; margin-top: 10px;">AI-powered consumption tracking & prediction</p>
+    </header>
+    
+    <!-- Main Dashboard -->
+    <div class="dashboard">
+        <!-- Left: Live Metrics -->
+        <div class="metrics-panel">
+            <div class="metric-card">
+                <div class="metric-label">Current Power</div>
+                <div class="metric-value energy" id="currentPower">--</div>
+                <div class="metric-change" id="powerChange">
+                    <i class="fas fa-arrow-up"></i> --%
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Predicted (Next Hour)</div>
+                <div class="metric-value" id="predictedPower" style="color: var(--info);">--</div>
+                <div style="font-size: 0.85rem; color: #666;">ML Forecast</div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Today's Cost</div>
+                <div class="metric-value cost" id="todayCost">£--</div>
+                <div class="metric-change down">
+                    <i class="fas fa-arrow-down"></i> vs yesterday
+                </div>
+            </div>
+            
+            <div class="metric-card">
+                <div class="metric-label">Carbon Footprint</div>
+                <div class="metric-value carbon" id="carbonFootprint">--</div>
+                <div style="font-size: 0.85rem; color: #666;">kg CO₂ today</div>
+            </div>
+            
+            <!-- Device Breakdown -->
+            <div class="metric-card">
+                <div class="metric-label">Live Device Usage</div>
+                <div class="device-grid" id="deviceGrid">
+                    <div class="device-item">
+                        <span class="device-name">Kitchen</span>
+                        <span class="device-value" id="kitchenVal">--W</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="device-name">Laundry</span>
+                        <span class="device-value" id="laundryVal">--W</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="device-name">Climate</span>
+                        <span class="device-value" id="climateVal">--W</span>
+                    </div>
+                    <div class="device-item">
+                        <span class="device-name">Other</span>
+                        <span class="device-value" id="otherVal">--W</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Center: Main Chart -->
+        <div class="chart-area">
+            <div class="chart-header">
+                <h3><i class="fas fa-chart-area"></i> Live Consumption</h3>
+                <div class="time-range">
+                    <button class="time-btn active" onclick="setTimeRange('1h')">1H</button>
+                    <button class="time-btn" onclick="setTimeRange('6h')">6H</button>
+                    <button class="time-btn" onclick="setTimeRange('24h')">24H</button>
+                </div>
+            </div>
+            <canvas id="mainChart"></canvas>
+        </div>
+        
+        <!-- Right: Live Feed -->
+        <div class="live-panel">
+            <div class="panel-header">
+                <i class="fas fa-stream"></i> Live Events
+            </div>
+            <div class="feed-container" id="eventFeed">
+                <!-- Events populated by WebSocket -->
+            </div>
+            
+            <div class="panel-header" style="margin-top: 15px;">
+                <i class="fas fa-exclamation-triangle"></i> Alerts
+            </div>
+            <div class="feed-container" id="alertFeed">
+                <!-- Alerts populated by WebSocket -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Smart Suggestion Banner -->
+    <div class="smart-banner hidden" id="smartBanner">
+        <div class="banner-icon">💡</div>
+        <div class="banner-content">
+            <h4 id="bannerTitle">Smart Tip</h4>
+            <p id="bannerMessage">Loading...</p>
+        </div>
+        <button class="banner-action" onclick="dismissBanner()">Got it</button>
+    </div>
+    
+    <script>
+        // Global state
+        let socket;
+        let chart;
+        let chartData = {
+            labels: [],
+            datasets: [{
+                label: 'Power (W)',
+                data: [],
+                borderColor: '#00d4aa',
+                backgroundColor: 'rgba(0, 212, 170, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0
+            }, {
+                label: 'Prediction',
+                data: [],
+                borderColor: '#4ecdc4',
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.4,
+                pointRadius: 0
+            }]
+        };
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            initChart();
+            connectWebSocket();
+        });
+        
+        // Initialize Chart
+        function initChart() {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: { duration: 0 },
+                    interaction: { intersect: false, mode: 'index' },
+                    plugins: {
+                        legend: { labels: { color: '#fff' } }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888', maxTicksLimit: 8 }
+                        },
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: '#888' }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Connect WebSocket
+        function connectWebSocket() {
+            socket = io();
+            
+            socket.on('connect', () => {
+                console.log('✅ Connected to real-time stream');
+                document.getElementById('connectionStatus').textContent = 'Connected';
+                document.getElementById('connectionStatus').style.color = '#00d4aa';
+            });
+            
+            socket.on('disconnect', () => {
+                console.log('❌ Disconnected');
+                document.getElementById('connectionStatus').textContent = 'Reconnecting...';
+                document.getElementById('connectionStatus').style.color = '#ff6b6b';
+            });
+            
+            // Initial data
+            socket.on('init_data', (data) => {
+                console.log('Received initial data:', data);
+                if (data.history && data.history.length > 0) {
+                    updateChartWithHistory(data.history);
+                }
+            });
+            
+            // Real-time updates
+            socket.on('new_reading', (data) => {
+                console.log('New reading:', data);
+                updateDashboard(data);
+            });
+        }
+        
+        // Update dashboard with new data
+        function updateDashboard(data) {
+            const reading = data.reading;
+            
+            // Update metrics
+            document.getElementById('currentPower').textContent = reading.Aggregate.toFixed(1) + ' W';
+            document.getElementById('predictedPower').textContent = data.prediction.toFixed(1) + ' W';
+            
+            // Update device values
+            document.getElementById('kitchenVal').textContent = reading.Kitchen.toFixed(0) + 'W';
+            document.getElementById('laundryVal').textContent = reading.Laundry.toFixed(0) + 'W';
+            document.getElementById('climateVal').textContent = reading.Climate_Control.toFixed(0) + 'W';
+            document.getElementById('otherVal').textContent = reading.Other_Appliances.toFixed(0) + 'W';
+            
+            // Update chart
+            const time = new Date(reading.timestamp).toLocaleTimeString();
+            chartData.labels.push(time);
+            chartData.datasets[0].data.push(reading.Aggregate);
+            chartData.datasets[1].data.push(data.prediction);
+            
+            // Keep last 100 points
+            if (chartData.labels.length > 100) {
+                chartData.labels.shift();
+                chartData.datasets[0].data.shift();
+                chartData.datasets[1].data.shift();
+            }
+            
+            chart.update('none'); // No animation for smooth real-time
+            
+            // Add to event feed
+            addToFeed('eventFeed', {
+                icon: 'fa-bolt',
+                class: 'tip',
+                message: `Power: ${reading.Aggregate.toFixed(0)}W`,
+                time: time
+            });
+            
+            // Show smart suggestion
+            if (data.suggestion) {
+                showSmartBanner(data.suggestion);
+            }
+            
+            // Show anomaly alert
+            if (data.anomaly) {
+                addToFeed('alertFeed', {
+                    icon: 'fa-exclamation-triangle',
+                    class: 'spike',
+                    message: data.anomaly.message,
+                    time: time
+                });
+            }
+        }
+        
+        // Update chart with history
+        function updateChartWithHistory(history) {
+            chartData.labels = history.map(h => 
+                new Date(h.timestamp).toLocaleTimeString()
+            ).slice(-100);
+            
+            chartData.datasets[0].data = history.map(h => h.Aggregate).slice(-100);
+            chart.update();
+        }
+        
+        // Add item to feed
+        function addToFeed(feedId, item) {
+            const feed = document.getElementById(feedId);
+            const div = document.createElement('div');
+            div.className = 'feed-item';
+            div.innerHTML = `
+                <div class="feed-time">${item.time}</div>
+                <div class="feed-content">
+                    <div class="feed-icon ${item.class}">
+                        <i class="fas ${item.icon}"></i>
+                    </div>
+                    <span>${item.message}</span>
+                </div>
+            `;
+            feed.insertBefore(div, feed.firstChild);
+            
+            // Keep only last 20 items
+            while (feed.children.length > 20) {
+                feed.removeChild(feed.lastChild);
+            }
+        }
+        
+        // Show smart banner
+        function showSmartBanner(suggestion) {
+            const banner = document.getElementById('smartBanner');
+            document.getElementById('bannerTitle').textContent = suggestion.icon + ' ' + suggestion.type;
+            document.getElementById('bannerMessage').textContent = suggestion.message;
+            banner.classList.remove('hidden');
+            
+            // Auto-hide after 10 seconds
+            setTimeout(() => {
+                banner.classList.add('hidden');
+            }, 10000);
+        }
+        
+        // Dismiss banner
+        function dismissBanner() {
+            document.getElementById('smartBanner').classList.add('hidden');
+        }
+        
+        // Time range buttons
+        function setTimeRange(range) {
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Request different history from server
+            // socket.emit('request_history', { range });
+        }
+    </script>
+</body>
+</html>
