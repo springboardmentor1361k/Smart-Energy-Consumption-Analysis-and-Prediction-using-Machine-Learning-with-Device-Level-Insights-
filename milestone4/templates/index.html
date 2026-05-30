@@ -1,120 +1,204 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="cards">
-        <article class="card glass fade-up">
-          <div class="card-icon green"><i class="fa-solid fa-battery-three-quarters"></i></div>
-          <div>
-            <p>Total Energy Consumption</p>
-            <h3 id="totalConsumption">{{ dashboard_data.cards.total_consumption }} kWh</h3>
+<section class="dashboard-hero panel glass">
+  <div class="hero-text">
+    <p class="hero-eyebrow">ML-Powered Analytics</p>
+    <h2>Predict &amp; optimize your energy usage</h2>
+    <p class="hero-desc">Enter device parameters to forecast consumption, cost, and sustainability insights.</p>
+  </div>
+  <img
+    src="{{ url_for('static', filename='images/energy-hero.svg') }}"
+    alt="Energy analytics dashboard illustration"
+    class="hero-image"
+  />
+</section>
+
+<section id="emptyState" class="empty-state panel glass">
+  <img
+    src="{{ url_for('static', filename='images/energy-empty.svg') }}"
+    alt=""
+    class="empty-state-image"
+    aria-hidden="true"
+  />
+  <div class="empty-state-copy">
+    <h2>No prediction data available yet</h2>
+    <p>Enter energy parameters and click Predict to generate consumption analytics.</p>
+  </div>
+</section>
+
+<section class="panel glass" id="predictionSection">
+  <div class="prediction-layout">
+    <div class="prediction-main">
+      <div class="panel-head"><h2>Prediction Form</h2></div>
+      <p id="formValidation" class="validation-message" role="alert" hidden></p>
+      <form id="predictionForm" class="prediction-form" novalidate>
+        <div class="form-grid">
+          <label>Temperature (C)
+            <input type="number" step="0.1" name="temperature" />
+          </label>
+          <label>Humidity (%)
+            <input type="number" step="0.1" name="humidity" />
+          </label>
+          <label>Voltage (V)
+            <input type="number" step="0.1" name="voltage" />
+          </label>
+          <label>Current (A)
+            <input type="number" step="0.1" name="current" />
+          </label>
+          <label>Device Usage (hours)
+            <input type="number" step="0.1" name="device_usage" />
+          </label>
+        </div>
+        <div class="form-actions">
+          <button type="submit" class="primary-btn" id="predictBtn">Predict</button>
+        </div>
+      </form>
+
+      <div id="predictionCard" class="prediction-output is-hidden">
+        <div class="result-head">
+          <h3>Prediction Result</h3>
+          <span class="result-tag">Live</span>
+        </div>
+        <div class="result-highlight">
+          <p>Predicted Energy Consumption</p>
+          <h2 id="predictionResult">-- kWh</h2>
+        </div>
+        <div class="result-grid">
+          <div class="result-item">
+            <p>Energy Risk Level</p>
+            <strong id="riskLevel">--</strong>
           </div>
-        </article>
-
-        <article class="card glass fade-up">
-          <div class="card-icon blue"><i class="fa-solid fa-robot"></i></div>
-          <div>
-            <p>Predicted Next-day Consumption</p>
-            <h3 id="predictedConsumption">{{ dashboard_data.cards.predicted_next_day }} kWh</h3>
+          <div class="result-item">
+            <p>Estimated Cost</p>
+            <strong id="estimatedCost">₹ --</strong>
           </div>
-        </article>
-
-        <article class="card glass fade-up">
-          <div class="card-icon amber"><i class="fa-solid fa-clock"></i></div>
-          <div>
-            <p>Peak Usage Hours</p>
-            <h3>{{ dashboard_data.cards.peak_usage_hours }}</h3>
+          <div class="result-item">
+            <p>Efficiency Score</p>
+            <strong id="efficiencyScore">-- / 100</strong>
           </div>
-        </article>
+        </div>
+      </div>
+    </div>
 
-      </section>
+    <aside class="prediction-visual">
+      <img
+        src="{{ url_for('static', filename='images/energy-form.svg') }}"
+        alt="Smart meter and energy monitoring illustration"
+        class="prediction-visual-image"
+      />
+      <ul class="prediction-visual-list">
+        <li><i class="fa-solid fa-temperature-half"></i> Environmental inputs</li>
+        <li><i class="fa-solid fa-bolt"></i> Electrical parameters</li>
+        <li><i class="fa-solid fa-clock"></i> Device runtime hours</li>
+      </ul>
+    </aside>
+  </div>
+</section>
 
-      <section class="grid">
-        <article class="panel glass">
-          <div class="panel-head"><h2>Daily Energy Consumption</h2></div>
-          <canvas id="lineChart"></canvas>
-        </article>
+<section id="analyticsSection" class="is-hidden">
+  <div class="analytics-banner panel glass">
+    <img
+      src="{{ url_for('static', filename='images/energy-analytics.svg') }}"
+      alt=""
+      class="analytics-banner-image"
+      aria-hidden="true"
+    />
+    <div>
+      <h2>Consumption Analytics</h2>
+      <p>Generated from your prediction — charts, metrics, and recommendations below.</p>
+    </div>
+  </div>
 
-        <article class="panel glass">
-          <div class="panel-head"><h2>Device-wise Consumption</h2></div>
-          <canvas id="barChart"></canvas>
-        </article>
+  <section class="cards">
+    <article class="card glass fade-up card-with-bg" data-visual="consumption">
+      <div class="card-icon green"><i class="fa-solid fa-battery-three-quarters"></i></div>
+      <div>
+        <p>Total Energy Consumption</p>
+        <h3 id="totalConsumption">-- kWh</h3>
+      </div>
+    </article>
 
-        <article class="panel glass">
-          <div class="panel-head"><h2>Appliance Percentage Usage</h2></div>
-          <canvas id="pieChart"></canvas>
-        </article>
+    <article class="card glass fade-up card-with-bg" data-visual="predict">
+      <div class="card-icon blue"><i class="fa-solid fa-robot"></i></div>
+      <div>
+        <p>Predicted Next-day Consumption</p>
+        <h3 id="predictedConsumption">-- kWh</h3>
+      </div>
+    </article>
 
-        <article class="panel glass">
-          <div class="panel-head">
-            <h2>Energy Efficiency Meter</h2>
-            <span id="efficiencyLabel">{{ dashboard_data.cards.sustainability_score }}%</span>
-          </div>
-          <div class="meter">
-            <div
-              id="meterFill"
-              class="meter-fill"
-              style="width: {{ dashboard_data.cards.sustainability_score }}%;"
-            ></div>
-          </div>
-          <p class="help">Higher score means better sustainability performance.</p>
-        </article>
+    <article class="card glass fade-up card-with-bg" data-visual="score">
+      <div class="card-icon green"><i class="fa-solid fa-chart-area"></i></div>
+      <div>
+        <p>Sustainability Score</p>
+        <h3 id="efficiencyLabel">--%</h3>
+      </div>
+    </article>
 
-        <article class="panel glass span-2">
-          <div class="panel-head"><h2>Prediction Form</h2></div>
-          <form id="predictionForm" class="form-grid">
-            <label>Temperature (C)
-              <input type="number" step="0.1" name="temperature" required />
-            </label>
-            <label>Humidity (%)
-              <input type="number" step="0.1" name="humidity" required />
-            </label>
-            <label>Voltage (V)
-              <input type="number" step="0.1" name="voltage" required />
-            </label>
-            <label>Current (A)
-              <input type="number" step="0.1" name="current" required />
-            </label>
-            <label>Device Usage (hours)
-              <input type="number" step="0.1" name="device_usage" required />
-            </label>
-            <button type="submit" class="primary-btn">Predict</button>
-          </form>
+    <article class="card glass fade-up card-with-bg" data-visual="peak">
+      <div class="card-icon amber"><i class="fa-solid fa-clock"></i></div>
+      <div>
+        <p>Peak Usage Hours</p>
+        <h3 id="peakUsageHours">--</h3>
+      </div>
+    </article>
+  </section>
 
-          <div id="predictionCard" class="prediction-output">
-            <div class="result-head">
-              <h3>Prediction Result</h3>
-              <span class="result-tag">Live</span>
-            </div>
-            <div class="result-highlight">
-              <p>Predicted Energy Consumption</p>
-              <h2 id="predictionResult">-- kWh</h2>
-            </div>
-            <div class="result-grid">
-              <div class="result-item">
-                <p>Energy Risk Level</p>
-                <strong id="riskLevel">--</strong>
-              </div>
-              <div class="result-item">
-                <p>Estimated Cost</p>
-                <strong id="estimatedCost">₹ --</strong>
-              </div>
-              <div class="result-item">
-                <p>Efficiency Score</p>
-                <strong id="efficiencyScore">-- / 100</strong>
-              </div>
-            </div>
-          </div>
-        </article>
+  <section class="insight-cards cards">
+    <article class="card glass fade-up">
+      <div class="card-icon amber"><i class="fa-solid fa-arrow-trend-up"></i></div>
+      <div>
+        <p>Peak Day</p>
+        <h3 id="insightPeakDay">--</h3>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon blue"><i class="fa-solid fa-arrow-trend-down"></i></div>
+      <div>
+        <p>Lowest Day</p>
+        <h3 id="insightLowDay">--</h3>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon green"><i class="fa-solid fa-chart-simple"></i></div>
+      <div>
+        <p>Average Daily Usage</p>
+        <h3 id="insightAvgDaily">-- kWh</h3>
+      </div>
+    </article>
+  </section>
 
-        <article class="panel glass span-2">
-          <div class="panel-head"><h2>Smart Energy-Saving Suggestions</h2></div>
-          <ul id="recommendationsList" class="recommendations">
-            <li>Reduce usage during peak hours (6 PM - 10 PM).</li>
-            <li>Optimize appliance usage by scheduling high-load tasks.</li>
-            <li>Shift heavy loads to off-peak times to reduce cost.</li>
-            <li>Use eco mode and auto-off timers for long-running appliances.</li>
-            <li>Track weekly usage and target a 5-10% monthly reduction.</li>
-          </ul>
-        </article>
-      </section>
+  <section class="grid">
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Daily Energy Consumption</h2></div>
+      <canvas id="lineChart"></canvas>
+    </article>
+
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Device-wise Consumption</h2></div>
+      <canvas id="barChart"></canvas>
+    </article>
+
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Appliance Percentage Usage</h2></div>
+      <canvas id="pieChart"></canvas>
+    </article>
+
+    <article class="panel glass">
+      <div class="panel-head">
+        <h2>Energy Efficiency Meter</h2>
+        <span id="meterScoreLabel">--%</span>
+      </div>
+      <div class="meter">
+        <div id="meterFill" class="meter-fill" style="width: 0%;"></div>
+      </div>
+      <p class="help">Higher score means better sustainability performance.</p>
+    </article>
+
+    <article class="panel glass span-2 suggestions-panel">
+      <div class="panel-head"><h2>Smart Energy-Saving Suggestions</h2></div>
+      <ul id="recommendationsList" class="recommendations"></ul>
+    </article>
+  </section>
+</section>
 {% endblock %}

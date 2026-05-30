@@ -28,9 +28,6 @@
         <a class="{{ 'active' if active_page == 'dashboard' else '' }}" href="{{ url_for('index') }}">
           <i class="fa-solid fa-chart-line"></i>Dashboard
         </a>
-        <a class="{{ 'active' if active_page == 'predictions' else '' }}" href="{{ url_for('predictions_page') }}">
-          <i class="fa-solid fa-wand-magic-sparkles"></i>Predictions
-        </a>
         <a class="{{ 'active' if active_page == 'insights' else '' }}" href="{{ url_for('insights_page') }}">
           <i class="fa-solid fa-lightbulb"></i>Insights
         </a>

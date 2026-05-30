@@ -19,8 +19,8 @@
   <article class="card glass fade-up">
     <div class="card-icon green"><i class="fa-solid fa-leaf"></i></div>
     <div>
-      <p>Weekly Efficiency Score</p>
-      <h3>{{ reports_data.weekly_summary.efficiency_score }}%</h3>
+      <p id="weeklyEfficiencyLabel">Weekly Efficiency Score</p>
+      <h3 id="weeklyEfficiencyScore">{{ reports_data.weeks[reports_data.default_week].efficiency_score }}%</h3>
     </div>
   </article>
 </section>
@@ -40,7 +40,7 @@
         </thead>
         <tbody>
           {% for row in reports_data.report_rows %}
-          <tr>
+          <tr class="week-row" data-week="{{ row[0] }}" tabindex="0" role="button">
             <td>{{ row[0] }}</td>
             <td>{{ row[1] }}</td>
             <td>{{ row[2] }}</td>
@@ -50,16 +50,32 @@
         </tbody>
       </table>
     </div>
+    <p class="help">Select a week to view its daily trend and device load mix below.</p>
   </article>
 
-  <article class="panel glass">
-    <div class="panel-head"><h2>Daily Trend</h2></div>
-    <canvas id="lineChart"></canvas>
-  </article>
-
-  <article class="panel glass">
-    <div class="panel-head"><h2>Device Load Mix</h2></div>
-    <canvas id="barChart"></canvas>
+  <article class="panel glass span-2">
+    <div class="panel-head week-chart-head">
+      <h2 id="weekChartTitle">Daily Trend — Week 1</h2>
+      <div class="week-selector" id="weekSelector">
+        {% for row in reports_data.report_rows %}
+        <button type="button" class="week-tab" data-week="{{ row[0] }}">{{ row[0] }}</button>
+        {% endfor %}
+      </div>
+    </div>
+    <div class="week-charts-grid">
+      <article class="chart-panel">
+        <h3 class="chart-subtitle">Daily Trend</h3>
+        <canvas id="lineChart"></canvas>
+      </article>
+      <article class="chart-panel">
+        <h3 class="chart-subtitle">Device Load Mix</h3>
+        <canvas id="barChart"></canvas>
+      </article>
+    </div>
   </article>
 </section>
+
+<script>
+  window.reportsData = {{ reports_data | tojson }};
+</script>
 {% endblock %}
