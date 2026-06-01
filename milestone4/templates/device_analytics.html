@@ -1,42 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="cards">
-  <article class="card glass fade-up">
-    <div class="card-icon green"><i class="fa-solid fa-snowflake"></i></div>
-    <div>
-      <p>Top Device</p>
-      <h3>{{ dashboard_data.charts.device.labels[0] }}</h3>
-    </div>
-  </article>
-  <article class="card glass fade-up">
-    <div class="card-icon blue"><i class="fa-solid fa-gauge-high"></i></div>
-    <div>
-      <p>Highest Device Share</p>
-      <h3>{{ dashboard_data.charts.device.values[0] }}%</h3>
-    </div>
-  </article>
+<section id="deviceAnalyticsEmpty" class="empty-state panel glass">
+  <img
+    src="{{ url_for('static', filename='images/energy-empty.svg') }}"
+    alt=""
+    class="empty-state-image"
+    aria-hidden="true"
+  />
+  <div class="empty-state-copy">
+    <h2>No device analytics yet</h2>
+    <p>
+      Run a prediction on the Dashboard to calculate device-level consumption,
+      efficiency scores, and recommendations.
+    </p>
+    <a href="{{ url_for('index') }}" class="primary-btn empty-state-action">Go to Dashboard</a>
+  </div>
 </section>
 
-<section class="grid">
-  <article class="panel glass">
-    <div class="panel-head"><h2>Device-wise Consumption</h2></div>
-    <canvas id="barChart"></canvas>
-  </article>
+<section id="deviceAnalyticsContent" class="is-hidden">
+  <section class="cards">
+    <article class="card glass fade-up">
+      <div class="card-icon green"><i class="fa-solid fa-snowflake"></i></div>
+      <div>
+        <p>Top Device</p>
+        <h3 id="deviceTopName">--</h3>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon blue"><i class="fa-solid fa-gauge-high"></i></div>
+      <div>
+        <p>Highest Device Share</p>
+        <h3 id="deviceTopShare">--%</h3>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon amber"><i class="fa-solid fa-leaf"></i></div>
+      <div>
+        <p>Avg Device Efficiency</p>
+        <h3 id="deviceAvgEfficiency">--%</h3>
+      </div>
+    </article>
+  </section>
 
-  <article class="panel glass">
-    <div class="panel-head"><h2>Appliance Share</h2></div>
-    <canvas id="pieChart"></canvas>
-  </article>
+  <section class="grid">
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Device-wise Consumption</h2></div>
+      <div id="barChartEmpty" class="chart-empty is-hidden">
+        Device breakdown will appear here after you run a prediction.
+      </div>
+      <canvas id="barChart"></canvas>
+    </article>
 
-  <article class="panel glass span-2">
-    <div class="panel-head"><h2>Device Recommendations</h2></div>
-    <ul class="recommendations">
-      <li>Prioritize HVAC optimization during high-temperature periods.</li>
-      <li>Move laundry and water heating cycles to off-peak windows.</li>
-      <li>Use smart timers for kitchen and lighting clusters after 10 PM.</li>
-      <li>Shift high-load devices to daytime hours when solar generation is available to reduce grid dependency.</li>
-    </ul>
-  </article>
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Device Efficiency Score</h2></div>
+      <div id="efficiencyChartEmpty" class="chart-empty is-hidden">
+        Device efficiency scores will appear here after you run a prediction.
+      </div>
+      <canvas id="efficiencyChart"></canvas>
+    </article>
+
+    <article class="panel glass span-2">
+      <div class="panel-head"><h2>Device Recommendations</h2></div>
+      <ul id="deviceRecommendationsList" class="recommendations"></ul>
+      <p id="deviceRecommendationsEmpty" class="chart-empty is-hidden">
+        Device recommendations will be generated from your prediction results.
+      </p>
+    </article>
+  </section>
 </section>
 {% endblock %}

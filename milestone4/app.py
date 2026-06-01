@@ -43,149 +43,452 @@ def _load_artifacts() -> InferenceArtifacts:
 
 ARTIFACTS = _load_artifacts()
 
+IDEAL_DAILY_KWH = 12.0
+COST_PER_KWH_INR = 8.0
+DAILY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+WEEKDAY_FACTORS = [1.02, 0.98, 1.05, 1.08, 1.12, 0.85, 0.82]
+HOURLY_LABELS = ["6 AM", "9 AM", "12 PM", "3 PM", "6 PM", "9 PM", "12 AM"]
+DEVICE_LABELS = [
+    "HVAC",
+    "Refrigerator",
+    "Washing Machine",
+    "Lighting",
+    "Water Heater",
+]
+APPLIANCE_LABELS = ["Cooling", "Kitchen", "Laundry", "Lighting", "Other"]
 
-def _base_dashboard_data() -> dict[str, Any]:
-    daily_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    daily_consumption = [17.1, 16.4, 18.8, 19.2, 20.1, 14.8, 15.5]
+FORECAST_SCENARIOS = [
+    {
+        "name": "Current Prediction",
+        "factor": 1.0,
+        "status": "Baseline forecast",
+        "description": "Projected from your latest dashboard prediction.",
+    },
+    {
+        "name": "Higher Usage Scenario",
+        "factor": 1.03,
+        "status": "Projected +3% usage",
+        "description": (
+            "Simulated increase with higher runtime across HVAC, laundry, "
+            "lighting, and water heating."
+        ),
+    },
+    {
+        "name": "Peak Demand Scenario",
+        "factor": 1.06,
+        "status": "Projected peak load",
+        "description": (
+            "Simulated peak period with the largest share shifts to HVAC "
+            "and water heating."
+        ),
+    },
+    {
+        "name": "Optimized Efficiency Scenario",
+        "factor": 0.94,
+        "status": "Projected savings",
+        "description": (
+            "Simulated savings with reduced HVAC, lighting, laundry, "
+            "and water heating use."
+        ),
+    },
+]
 
-    device_labels = [
-        "HVAC",
-        "Refrigerator",
-        "Washing Machine",
-        "Lighting",
-        "Water Heater",
+# Device order: HVAC, Refrigerator, Washing Machine, Lighting, Water Heater
+SCENARIO_DEVICE_WEIGHT_MULT = [
+    [1.0, 1.0, 1.0, 1.0, 1.0],
+    [1.04, 1.0, 1.10, 1.08, 1.05],
+    [1.15, 1.0, 1.06, 1.10, 1.18],
+    [0.88, 1.0, 0.90, 0.82, 0.86],
+]
+
+SUSTAINABILITY_FORMULA = (
+    "Score (0-100) = Consumption (40 pts) + Peak Load (25 pts) + "
+    "Device Efficiency (25 pts) + Off-peak Usage (10 pts). "
+    "Lower predicted kWh, lower peak-hour load, and higher device efficiency increase the score."
+)
+EFFICIENCY_FORMULA = (
+    "Energy Efficiency = (Ideal Consumption / Actual Consumption) x 100, "
+    f"where ideal baseline is {IDEAL_DAILY_KWH} kWh/day. Result is clamped between 0 and 100."
+)
+
+
+def _clamp(value: float, low: float = 0.0, high: float = 100.0) -> float:
+    return max(low, min(high, value))
+
+
+def _normalize_percentages(values: list[float]) -> list[int]:
+    total = float(sum(values))
+    count = len(values)
+    if count == 0:
+        return []
+    if total <= 0:
+        base = 100 // count
+        result = [base] * count
+        result[0] += 100 - sum(result)
+        return result
+
+    scaled = [value / total * 100 for value in values]
+    rounded = [int(round(value)) for value in scaled]
+    diff = 100 - sum(rounded)
+    if diff:
+        adjust_index = max(range(count), key=lambda index: scaled[index])
+        rounded[adjust_index] += diff
+    return rounded
+
+
+def _distribute_kwh(total: float, weights: list[float]) -> list[float]:
+    weight_sum = float(sum(weights))
+    count = len(weights)
+    if count == 0:
+        return []
+    if weight_sum <= 0:
+        equal = round(total / count, 2)
+        values = [equal] * count
+    else:
+        values = [round(total * weight / weight_sum, 2) for weight in weights]
+
+    diff = round(total - sum(values), 2)
+    if diff:
+        values[0] = round(values[0] + diff, 2)
+    return values
+
+
+def _device_weights(features: dict[str, float]) -> list[float]:
+    temperature = features["temperature"]
+    humidity = features["humidity"]
+    voltage = features["voltage"]
+    current = features["current"]
+    usage = features["device_usage"]
+
+    return [
+        max(0.5, temperature * 0.85 + humidity * 0.08 + usage * 0.45),
+        max(0.3, 2.0 + voltage * 0.008),
+        max(0.2, usage * 0.55 + current * 0.15),
+        max(0.2, usage * 0.35 + max(voltage - 220.0, 0.0) * 0.04),
+        max(0.3, current * 1.1 + temperature * 0.05),
     ]
-    device_consumption = [41, 13, 11, 19, 16]
 
-    appliance_labels = ["Cooling", "Kitchen", "Laundry", "Lighting", "Other"]
-    appliance_percentages = [38, 21, 13, 18, 10]
 
-    total = round(float(np.sum(daily_consumption)), 1)
-    predicted_next = round(float(np.mean(daily_consumption) * 1.05), 1)
-    cost_estimation = round(total * 0.18, 2)
+def _hourly_weights(features: dict[str, float]) -> list[float]:
+    temperature = features["temperature"]
+    current = features["current"]
+    usage = features["device_usage"]
+
+    morning = 0.9 + usage * 0.02
+    afternoon = 1.0 + temperature * 0.015
+    evening = 1.15 + usage * 0.04 + current * 0.01
+    night = 0.75 + usage * 0.01
+
+    return [
+        morning,
+        morning * 1.05,
+        afternoon,
+        afternoon * 0.95,
+        evening,
+        evening * 1.08,
+        night,
+    ]
+
+
+def _device_efficiency_scores(
+    features: dict[str, float], device_percentages: list[int]
+) -> list[int]:
+    temperature = features["temperature"]
+    voltage = features["voltage"]
+    current = features["current"]
+    usage = features["device_usage"]
+
+    scores = [
+        _clamp(92 - (temperature - 22) * 2.2 - device_percentages[0] * 0.12, 40, 95),
+        _clamp(88 + (235 - voltage) * 0.25, 50, 98),
+        _clamp(80 - usage * 1.4, 45, 90),
+        _clamp(75 + (6 - usage) * 2.0, 55, 95),
+        _clamp(78 - current * 1.15, 40, 88),
+    ]
+    return [int(round(score)) for score in scores]
+
+
+def _peak_window(labels: list[str], values: list[float]) -> dict[str, Any]:
+    peak_index = values.index(max(values))
+    peak_value = values[peak_index]
+    start_index = max(0, peak_index - 1)
+    end_index = min(len(labels) - 1, peak_index + 1)
+    start = labels[start_index]
+    end = labels[end_index]
 
     return {
+        "start": start,
+        "end": end,
+        "peak_kwh": peak_value,
+        "display": f"{start} - {end}",
+        "detail": f"{start} - {end} ({peak_value} kWh peak)",
+    }
+
+
+def _energy_efficiency_score(predicted_kwh: float) -> int:
+    if predicted_kwh <= 0:
+        return 0
+    return int(round(_clamp((IDEAL_DAILY_KWH / predicted_kwh) * 100)))
+
+
+def _efficiency_rating(score: int) -> str:
+    if score >= 86:
+        return "Excellent"
+    if score >= 66:
+        return "Good"
+    if score >= 41:
+        return "Average"
+    return "Poor"
+
+
+def _sustainability_score(
+    predicted_kwh: float,
+    features: dict[str, float],
+    peak_kwh: float,
+    avg_device_efficiency: float,
+) -> int:
+    consumption_points = _clamp((IDEAL_DAILY_KWH / max(predicted_kwh, 0.1)) * 40, 0, 40)
+    peak_ratio = peak_kwh / max(predicted_kwh, 0.1)
+    peak_points = _clamp(25 * (1 - peak_ratio), 0, 25)
+    efficiency_points = _clamp(avg_device_efficiency * 0.25, 0, 25)
+
+    usage = features["device_usage"]
+    if usage <= 5:
+        renewable_points = 10.0
+    elif usage <= 8:
+        renewable_points = 5.0
+    else:
+        renewable_points = 0.0
+
+    total = consumption_points + peak_points + efficiency_points + renewable_points
+    return int(round(_clamp(total)))
+
+
+def _build_insights_text(
+    analytics: dict[str, Any], features: dict[str, float], predicted_kwh: float
+) -> list[str]:
+    peak = analytics["cards"]["peak_usage"]
+    insights = analytics["insights"]
+    appliance = analytics["charts"]["appliance"]
+    top_index = appliance["values"].index(max(appliance["values"]))
+
+    return [
+        (
+            f"Peak demand occurs between {peak['start']} and {peak['end']} "
+            f"with {peak['peak_kwh']} kWh load."
+        ),
+        (
+            f"{appliance['labels'][top_index]} drives the largest share at "
+            f"{appliance['values'][top_index]}% of predicted daily use."
+        ),
+        (
+            f"{insights['peak_day']} is the highest day at {insights['peak_value']} kWh; "
+            f"{insights['lowest_day']} is lowest at {insights['lowest_value']} kWh."
+        ),
+        (
+            f"Predicted next-day consumption is {predicted_kwh} kWh with "
+            f"{analytics['cards']['efficiency_rating']} energy efficiency."
+        ),
+    ]
+
+
+def _empty_dashboard_data() -> dict[str, Any]:
+    return {
+        "cards": {},
+        "charts": {
+            "daily": {"labels": [], "values": []},
+            "device": {"labels": [], "values": [], "kwh": []},
+            "appliance": {"labels": [], "values": [], "kwh": []},
+            "hourly": {"labels": [], "values": []},
+            "device_efficiency": {"labels": [], "values": []},
+        },
+        "insights": {},
+    }
+
+
+def _build_analytics_from_prediction(
+    predicted_kwh: float, features: dict[str, float]
+) -> dict[str, Any]:
+    temp_factor = 1 + (features["temperature"] - 25) * 0.008
+    usage_factor = 1 + (features["device_usage"] - 5) * 0.015
+    daily_values = [
+        round(predicted_kwh * factor * temp_factor * usage_factor, 1)
+        for factor in WEEKDAY_FACTORS
+    ]
+    weekly_total = round(float(np.sum(daily_values)), 1)
+
+    device_weights = _device_weights(features)
+    device_kwh = _distribute_kwh(predicted_kwh, device_weights)
+    device_percentages = _normalize_percentages(device_kwh)
+
+    appliance_kwh = [
+        device_kwh[0],
+        device_kwh[1],
+        device_kwh[2],
+        device_kwh[3],
+        device_kwh[4],
+    ]
+    appliance_percentages = _normalize_percentages(appliance_kwh)
+
+    hourly_values = _distribute_kwh(predicted_kwh, _hourly_weights(features))
+    peak = _peak_window(HOURLY_LABELS, hourly_values)
+
+    device_efficiency = _device_efficiency_scores(features, device_percentages)
+    avg_device_efficiency = float(np.mean(device_efficiency))
+    sustainability = _sustainability_score(
+        predicted_kwh, features, peak["peak_kwh"], avg_device_efficiency
+    )
+    energy_efficiency = _energy_efficiency_score(predicted_kwh)
+    efficiency_rating = _efficiency_rating(energy_efficiency)
+
+    max_value = max(daily_values)
+    min_value = min(daily_values)
+
+    analytics = {
         "cards": {
-            "total_consumption": total,
-            "predicted_next_day": predicted_next,
-            "peak_usage_hours": "6 PM - 10 PM",
-            "cost_estimation": cost_estimation,
-            "sustainability_score": 82,
+            "total_consumption": weekly_total,
+            "predicted_next_day": round(predicted_kwh, 2),
+            "peak_usage_hours": peak["detail"],
+            "peak_usage": peak,
+            "cost_estimation": round(predicted_kwh * COST_PER_KWH_INR, 2),
+            "sustainability_score": sustainability,
+            "energy_efficiency_score": energy_efficiency,
+            "efficiency_rating": efficiency_rating,
+            "avg_device_efficiency": int(round(avg_device_efficiency)),
         },
         "charts": {
-            "daily": {"labels": daily_labels, "values": daily_consumption},
-            "device": {"labels": device_labels, "values": device_consumption},
-            "appliance": {"labels": appliance_labels, "values": appliance_percentages},
+            "daily": {"labels": DAILY_LABELS, "values": daily_values},
+            "device": {
+                "labels": DEVICE_LABELS,
+                "values": device_percentages,
+                "kwh": device_kwh,
+            },
+            "appliance": {
+                "labels": APPLIANCE_LABELS,
+                "values": appliance_percentages,
+                "kwh": appliance_kwh,
+            },
+            "hourly": {"labels": HOURLY_LABELS, "values": hourly_values},
+            "device_efficiency": {
+                "labels": DEVICE_LABELS,
+                "values": device_efficiency,
+            },
+        },
+        "metrics": {
+            "sustainability_formula": SUSTAINABILITY_FORMULA,
+            "efficiency_formula": EFFICIENCY_FORMULA,
+            "device_total_kwh": round(sum(device_kwh), 2),
+            "appliance_total_kwh": round(sum(appliance_kwh), 2),
+            "predicted_kwh": round(predicted_kwh, 2),
+        },
+        "insights": {
+            "peak_day": DAILY_LABELS[daily_values.index(max_value)],
+            "peak_value": max_value,
+            "lowest_day": DAILY_LABELS[daily_values.index(min_value)],
+            "lowest_value": min_value,
+            "average_daily": round(float(np.mean(daily_values)), 2),
+            "insights": [],
         },
     }
+    analytics["insights"]["insights"] = _build_insights_text(
+        analytics, features, predicted_kwh
+    )
+    return analytics
 
 
-def _build_insights_data(dashboard_data: dict[str, Any]) -> dict[str, Any]:
-    daily = dashboard_data["charts"]["daily"]["values"]
-    max_value = max(daily)
-    min_value = min(daily)
-    peak_day = dashboard_data["charts"]["daily"]["labels"][daily.index(max_value)]
-    low_day = dashboard_data["charts"]["daily"]["labels"][daily.index(min_value)]
-    avg_daily = round(float(np.mean(daily)), 2)
+def _build_device_analytics_data(analytics: dict[str, Any]) -> dict[str, Any]:
+    device = analytics["charts"]["device"]
+    max_value = max(device["values"])
+    max_index = device["values"].index(max_value)
+    efficiency_values = analytics["charts"]["device_efficiency"]["values"]
 
     return {
-        "peak_day": peak_day,
-        "peak_value": max_value,
-        "lowest_day": low_day,
-        "lowest_value": min_value,
-        "average_daily": avg_daily,
-        "insights": [
-            "Peak demand appears in the evening, especially between 6 PM and 10 PM.",
-            "Cooling and kitchen appliances drive most of the total load share.",
-            "Weekend usage is lower, indicating flexible loads can be shifted.",
-        ],
+        "top_device": device["labels"][max_index],
+        "top_share": max_value,
+        "avg_efficiency": int(round(float(np.mean(efficiency_values)), 0)),
     }
 
 
-def _build_reports_data(dashboard_data: dict[str, Any]) -> dict[str, Any]:
-    total = dashboard_data["cards"]["total_consumption"]
-    predicted_next = dashboard_data["cards"]["predicted_next_day"]
-    cost = dashboard_data["cards"]["cost_estimation"]
-    efficiency = dashboard_data["cards"]["sustainability_score"]
+def _build_insights_data(analytics: dict[str, Any]) -> dict[str, Any]:
+    insights = analytics.get("insights", {})
+    return {
+        "peak_day": insights.get("peak_day", "--"),
+        "peak_value": insights.get("peak_value", 0),
+        "lowest_day": insights.get("lowest_day", "--"),
+        "lowest_value": insights.get("lowest_value", 0),
+        "average_daily": insights.get("average_daily", 0),
+        "insights": insights.get("insights", []),
+    }
 
-    daily_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    device_labels = [
-        "HVAC",
-        "Refrigerator",
-        "Washing Machine",
-        "Lighting",
-        "Water Heater",
+
+def _scenario_efficiency_score(base_efficiency: int, index: int) -> int:
+    adjustments = [0, -3, -6, 6]
+    return int(round(_clamp(base_efficiency + adjustments[index])))
+
+
+def _scenario_device_percentages(
+    base_percentages: list[int], scenario_index: int
+) -> list[int]:
+    multipliers = SCENARIO_DEVICE_WEIGHT_MULT[
+        min(scenario_index, len(SCENARIO_DEVICE_WEIGHT_MULT) - 1)
     ]
-
-    week_defs = [
-        {
-            "name": "Week 1",
-            "total": 121.4,
-            "cost": 22.1,
-            "status": "Stable",
-            "efficiency_score": 79,
-            "factors": [1.02, 0.98, 1.05, 1.08, 1.12, 0.85, 0.82],
-            "device": [41, 13, 11, 19, 16],
-        },
-        {
-            "name": "Week 2",
-            "total": 117.9,
-            "cost": 21.2,
-            "status": "Improved",
-            "efficiency_score": 86,
-            "factors": [0.98, 0.96, 1.0, 1.02, 1.05, 0.88, 0.86],
-            "device": [38, 14, 12, 18, 18],
-        },
-        {
-            "name": "Week 3",
-            "total": 123.3,
-            "cost": 22.8,
-            "status": "Peak Weather Load",
-            "efficiency_score": 71,
-            "factors": [1.08, 1.05, 1.12, 1.15, 1.18, 0.92, 0.88],
-            "device": [45, 12, 10, 17, 16],
-        },
-        {
-            "name": "Week 4",
-            "total": 115.7,
-            "cost": 20.6,
-            "status": "Optimized",
-            "efficiency_score": 89,
-            "factors": [0.95, 0.93, 0.98, 1.0, 1.02, 0.84, 0.82],
-            "device": [36, 15, 13, 19, 17],
-        },
+    weighted = [
+        max(1.0, float(base_percentages[i]) * multipliers[i])
+        for i in range(len(base_percentages))
     ]
+    return _normalize_percentages(weighted)
 
-    weeks: dict[str, Any] = {}
+
+def _build_reports_data(analytics: dict[str, Any]) -> dict[str, Any]:
+    predicted_kwh = float(analytics["cards"]["predicted_next_day"])
+    weekly_total = float(analytics["cards"]["total_consumption"])
+    efficiency = int(analytics["cards"]["energy_efficiency_score"])
+
+    scenarios: dict[str, Any] = {}
     report_rows: list[list[Any]] = []
+    base_daily = analytics["charts"]["daily"]["values"]
+    base_device = analytics["charts"]["device"]["values"]
 
-    for week in week_defs:
-        factor_sum = float(np.sum(week["factors"]))
+    for index, scenario in enumerate(FORECAST_SCENARIOS):
+        scenario_total = round(weekly_total * scenario["factor"], 1)
+        scenario_cost = round(scenario_total * COST_PER_KWH_INR / 7, 2)
         daily_values = [
-            round(week["total"] * factor / factor_sum, 1) for factor in week["factors"]
+            round(value * scenario["factor"], 1) for value in base_daily
         ]
-        weeks[week["name"]] = {
-            "daily": {"labels": daily_labels, "values": daily_values},
-            "device": {"labels": device_labels, "values": week["device"]},
-            "status": week["status"],
-            "total_kwh": week["total"],
-            "cost": week["cost"],
-            "efficiency_score": week["efficiency_score"],
+        device_values = _scenario_device_percentages(base_device, index)
+
+        scenarios[scenario["name"]] = {
+            "daily": {"labels": DAILY_LABELS, "values": daily_values},
+            "device": {"labels": DEVICE_LABELS, "values": device_values},
+            "status": scenario["status"],
+            "description": scenario["description"],
+            "factor": scenario["factor"],
+            "total_kwh": scenario_total,
+            "cost": scenario_cost,
+            "efficiency_score": _scenario_efficiency_score(efficiency, index),
+            "is_projected": True,
         }
-        report_rows.append([week["name"], week["total"], week["cost"], week["status"]])
+        report_rows.append(
+            [scenario["name"], scenario_total, scenario_cost, scenario["status"]]
+        )
 
     return {
-        "monthly_projection_kwh": round(predicted_next * 30, 2),
-        "monthly_projection_cost": round(float(cost) * 4.1, 2),
-        "weekly_summary": {
-            "total_kwh": total,
-            "avg_kwh_per_day": round(total / 7, 2),
+        "monthly_projection_kwh": round(predicted_kwh * 30, 2),
+        "monthly_projection_cost": round(predicted_kwh * COST_PER_KWH_INR * 30, 2),
+        "forecast_summary": {
+            "total_kwh": weekly_total,
+            "avg_kwh_per_day": round(weekly_total / 7, 2),
             "efficiency_score": efficiency,
         },
         "report_rows": report_rows,
-        "weeks": weeks,
-        "default_week": "Week 1",
+        "scenarios": scenarios,
+        "default_scenario": FORECAST_SCENARIOS[0]["name"],
+        "data_source": "projected",
     }
+
+
+def _base_dashboard_data() -> dict[str, Any]:
+    return _empty_dashboard_data()
 
 
 def _rule_based_prediction(features: dict[str, float]) -> float:
@@ -295,91 +598,6 @@ def _risk_level(predicted_kwh: float) -> str:
     return "Low"
 
 
-def _build_analytics_from_prediction(
-    predicted_kwh: float, features: dict[str, float]
-) -> dict[str, Any]:
-    daily_labels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-    weekday_factors = [1.02, 0.98, 1.05, 1.08, 1.12, 0.85, 0.82]
-    temp_weight = 1 + (features["temperature"] - 25) * 0.01
-    usage_weight = 1 + (features["device_usage"] - 5) * 0.02
-
-    daily_values = [
-        round(predicted_kwh * factor * temp_weight * usage_weight, 1)
-        for factor in weekday_factors
-    ]
-    total = round(float(np.sum(daily_values)), 1)
-
-    if features["device_usage"] >= 8 or features["temperature"] >= 32:
-        peak_hours = "6 PM - 10 PM"
-    elif features["device_usage"] >= 5:
-        peak_hours = "5 PM - 9 PM"
-    else:
-        peak_hours = "2 PM - 6 PM"
-
-    device_labels = [
-        "HVAC",
-        "Refrigerator",
-        "Washing Machine",
-        "Lighting",
-        "Water Heater",
-    ]
-    hvac = min(48.0, 18 + features["temperature"] * 0.9 + features["humidity"] * 0.1)
-    water_heater = min(22.0, 8 + features["current"] * 1.2)
-    laundry = min(18.0, 6 + features["device_usage"] * 1.1)
-    lighting = min(20.0, 10 + max(features["voltage"] - 220, 0) * 0.15 + 8)
-    refrigerator = max(8.0, 100 - hvac - water_heater - laundry - lighting)
-    raw_shares = [hvac, refrigerator, laundry, lighting, water_heater]
-    share_total = sum(raw_shares)
-    device_values = [int(round(v / share_total * 100)) for v in raw_shares]
-
-    appliance_labels = ["Cooling", "Kitchen", "Laundry", "Lighting", "Other"]
-    cooling = int(round(device_values[0] * 0.95))
-    kitchen = int(round(device_values[1] * 0.6 + device_values[3] * 0.2))
-    laundry_pct = device_values[2]
-    lighting_pct = int(round(device_values[3] * 0.7))
-    other = max(5, 100 - cooling - kitchen - laundry_pct - lighting_pct)
-    appliance_values = [cooling, kitchen, laundry_pct, lighting_pct, other]
-
-    score = int(max(0, min(100, 100 - (predicted_kwh * 2.1))))
-    cost = round(predicted_kwh * 8.0, 2)
-
-    max_value = max(daily_values)
-    min_value = min(daily_values)
-
-    return {
-        "cards": {
-            "total_consumption": total,
-            "predicted_next_day": round(predicted_kwh, 2),
-            "peak_usage_hours": peak_hours,
-            "cost_estimation": cost,
-            "sustainability_score": score,
-        },
-        "charts": {
-            "daily": {"labels": daily_labels, "values": daily_values},
-            "device": {"labels": device_labels, "values": device_values},
-            "appliance": {"labels": appliance_labels, "values": appliance_values},
-        },
-        "insights": {
-            "peak_day": daily_labels[daily_values.index(max_value)],
-            "peak_value": max_value,
-            "lowest_day": daily_labels[daily_values.index(min_value)],
-            "lowest_value": min_value,
-            "average_daily": round(float(np.mean(daily_values)), 2),
-        },
-    }
-
-
-def _empty_dashboard_data() -> dict[str, Any]:
-    return {
-        "cards": {},
-        "charts": {
-            "daily": {"labels": [], "values": []},
-            "device": {"labels": [], "values": []},
-            "appliance": {"labels": [], "values": []},
-        },
-    }
-
-
 @app.route("/")
 def index():
     return render_template(
@@ -391,44 +609,48 @@ def index():
 
 @app.route("/predictions")
 def predictions_page():
-    dashboard_data = _base_dashboard_data()
     return render_template(
         "predictions.html",
-        dashboard_data=dashboard_data,
+        dashboard_data=_empty_dashboard_data(),
         active_page="predictions",
     )
 
 
 @app.route("/insights")
 def insights_page():
-    dashboard_data = _base_dashboard_data()
-    insights_data = _build_insights_data(dashboard_data)
+    empty = _empty_dashboard_data()
     return render_template(
         "insights.html",
-        dashboard_data=dashboard_data,
-        insights_data=insights_data,
+        dashboard_data=empty,
+        insights_data=_build_insights_data(empty),
         active_page="insights",
     )
 
 
 @app.route("/device-analytics")
 def device_analytics_page():
-    dashboard_data = _base_dashboard_data()
     return render_template(
         "device_analytics.html",
-        dashboard_data=dashboard_data,
+        dashboard_data=_empty_dashboard_data(),
         active_page="device_analytics",
     )
 
 
 @app.route("/reports")
 def reports_page():
-    dashboard_data = _base_dashboard_data()
-    reports_data = _build_reports_data(dashboard_data)
+    empty_reports = {
+        "monthly_projection_kwh": 0,
+        "monthly_projection_cost": 0,
+        "forecast_summary": {"total_kwh": 0, "avg_kwh_per_day": 0, "efficiency_score": 0},
+        "report_rows": [],
+        "scenarios": {},
+        "default_scenario": FORECAST_SCENARIOS[0]["name"],
+        "data_source": "projected",
+    }
     return render_template(
         "reports.html",
-        dashboard_data=dashboard_data,
-        reports_data=reports_data,
+        dashboard_data=_empty_dashboard_data(),
+        reports_data=empty_reports,
         active_page="reports",
     )
 
@@ -447,18 +669,18 @@ def predict():
         return jsonify({"error": "All inputs must be numeric."}), 400
 
     predicted = round(_model_prediction(features), 2)
-    score = int(max(0, min(100, 100 - (predicted * 2.1))))
-    estimated_cost_inr = round(predicted * 8.0, 2)
-    risk_level = _risk_level(predicted)
     analytics = _build_analytics_from_prediction(predicted, features)
+    cards = analytics["cards"]
 
     return jsonify(
         {
             "prediction_kwh": predicted,
-            "risk_level": risk_level,
-            "estimated_cost_inr": estimated_cost_inr,
+            "risk_level": _risk_level(predicted),
+            "estimated_cost_inr": cards["cost_estimation"],
             "recommendations": _recommendations(predicted, features),
-            "sustainability_score": score,
+            "sustainability_score": cards["sustainability_score"],
+            "energy_efficiency_score": cards["energy_efficiency_score"],
+            "efficiency_rating": cards["efficiency_rating"],
             "analytics": analytics,
         }
     )

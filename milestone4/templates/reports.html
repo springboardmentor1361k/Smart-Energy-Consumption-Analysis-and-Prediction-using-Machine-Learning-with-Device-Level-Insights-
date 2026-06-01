@@ -1,81 +1,87 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="cards">
-  <article class="card glass fade-up">
-    <div class="card-icon blue"><i class="fa-solid fa-calendar-days"></i></div>
-    <div>
-      <p>Monthly Projected Usage</p>
-      <h3>{{ reports_data.monthly_projection_kwh }} kWh</h3>
-    </div>
-  </article>
-  <article class="card glass fade-up">
-    <div class="card-icon purple"><i class="fa-solid fa-dollar-sign"></i></div>
-    <div>
-      <p>Monthly Projected Cost</p>
-      <h3>₹{{ reports_data.monthly_projection_cost }}</h3>
-    </div>
-  </article>
-  <article class="card glass fade-up">
-    <div class="card-icon green"><i class="fa-solid fa-leaf"></i></div>
-    <div>
-      <p id="weeklyEfficiencyLabel">Weekly Efficiency Score</p>
-      <h3 id="weeklyEfficiencyScore">{{ reports_data.weeks[reports_data.default_week].efficiency_score }}%</h3>
-    </div>
-  </article>
+<section id="reportsEmpty" class="empty-state panel glass">
+  <img
+    src="{{ url_for('static', filename='images/energy-empty.svg') }}"
+    alt=""
+    class="empty-state-image"
+    aria-hidden="true"
+  />
+  <div class="empty-state-copy">
+    <h2>No forecast scenarios available yet</h2>
+    <p>
+      Run a prediction on the Dashboard to generate projected usage scenarios,
+      cost estimates, and comparison charts here.
+    </p>
+    <a href="{{ url_for('index') }}" class="primary-btn empty-state-action">Go to Dashboard</a>
+  </div>
 </section>
 
-<section class="grid">
-  <article class="panel glass span-2">
-    <div class="panel-head"><h2>Weekly Report Summary</h2></div>
-    <div class="table-wrap">
-      <table class="report-table">
-        <thead>
-          <tr>
-            <th>Week</th>
-            <th>Consumption (kWh)</th>
-            <th>Estimated Cost (₹)</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in reports_data.report_rows %}
-          <tr class="week-row" data-week="{{ row[0] }}" tabindex="0" role="button">
-            <td>{{ row[0] }}</td>
-            <td>{{ row[1] }}</td>
-            <td>{{ row[2] }}</td>
-            <td>{{ row[3] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-    <p class="help">Select a week to view its daily trend and device load mix below.</p>
-  </article>
-
-  <article class="panel glass span-2">
-    <div class="panel-head week-chart-head">
-      <h2 id="weekChartTitle">Daily Trend — Week 1</h2>
-      <div class="week-selector" id="weekSelector">
-        {% for row in reports_data.report_rows %}
-        <button type="button" class="week-tab" data-week="{{ row[0] }}">{{ row[0] }}</button>
-        {% endfor %}
+<section id="reportsContent" class="is-hidden">
+  <section class="cards">
+    <article class="card glass fade-up">
+      <div class="card-icon blue"><i class="fa-solid fa-calendar-days"></i></div>
+      <div>
+        <p>Monthly Projected Usage</p>
+        <h3 id="monthlyProjectionKwh">-- kWh</h3>
+        <p class="card-subtext">Extrapolated from current prediction (× 30 days)</p>
       </div>
-    </div>
-    <div class="week-charts-grid">
-      <article class="chart-panel">
-        <h3 class="chart-subtitle">Daily Trend</h3>
-        <canvas id="lineChart"></canvas>
-      </article>
-      <article class="chart-panel">
-        <h3 class="chart-subtitle">Device Load Mix</h3>
-        <canvas id="barChart"></canvas>
-      </article>
-    </div>
-  </article>
-</section>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon purple"><i class="fa-solid fa-dollar-sign"></i></div>
+      <div>
+        <p>Monthly Projected Cost</p>
+        <h3 id="monthlyProjectionCost">₹ --</h3>
+        <p class="card-subtext">Estimated from projected monthly usage</p>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon green"><i class="fa-solid fa-leaf"></i></div>
+      <div>
+        <p id="scenarioEfficiencyLabel">Scenario Efficiency Score</p>
+        <h3 id="scenarioEfficiencyScore">--%</h3>
+        <p class="card-subtext">Derived from the selected projected scenario</p>
+      </div>
+    </article>
+  </section>
 
-<script>
-  window.reportsData = {{ reports_data | tojson }};
-</script>
+  <section class="grid">
+    <article class="panel glass span-2">
+      <div class="panel-head"><h2>Forecast Scenario Summary</h2></div>
+      <div class="table-wrap">
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Scenario</th>
+              <th>Projected Weekly Consumption (kWh)</th>
+              <th>Projected Cost (₹)</th>
+              <th>Scenario Type</th>
+            </tr>
+          </thead>
+          <tbody id="reportTableBody"></tbody>
+        </table>
+      </div>
+      <p class="help">Select a scenario to view its projected daily trend and device load mix below.</p>
+    </article>
+
+    <article class="panel glass span-2">
+      <div class="panel-head scenario-chart-head">
+        <h2 id="scenarioChartTitle">Projected Daily Trend — Current Prediction</h2>
+        <div class="scenario-selector" id="scenarioSelector"></div>
+      </div>
+      <p id="scenarioDescription" class="help scenario-description">--</p>
+      <div class="scenario-charts-grid">
+        <article class="chart-panel">
+          <h3 class="chart-subtitle">Projected Daily Trend</h3>
+          <canvas id="lineChart"></canvas>
+        </article>
+        <article class="chart-panel">
+          <h3 class="chart-subtitle">Projected Device Load Mix</h3>
+          <canvas id="barChart"></canvas>
+        </article>
+      </div>
+    </article>
+  </section>
+</section>
 {% endblock %}

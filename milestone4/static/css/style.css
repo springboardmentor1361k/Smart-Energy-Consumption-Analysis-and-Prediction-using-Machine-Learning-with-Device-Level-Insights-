@@ -108,6 +108,11 @@ body {
   scrollbar-width: thin;
 }
 
+.main > section {
+  flex-shrink: 0;
+  width: 100%;
+}
+
 .main::-webkit-scrollbar {
   width: 8px;
 }
@@ -314,6 +319,126 @@ body {
   min-height: 42px;
 }
 
+.form-actions .secondary-btn {
+  grid-column: 2;
+  width: 100%;
+  justify-self: stretch;
+  align-self: stretch;
+  min-height: 42px;
+}
+
+.secondary-btn {
+  padding: 11px 22px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: inherit;
+  color: var(--text);
+  cursor: pointer;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.secondary-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.card-subtext {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.info-tip {
+  margin-left: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--muted);
+  cursor: help;
+  vertical-align: middle;
+}
+
+.efficiency-rating {
+  color: var(--green);
+  font-weight: 600;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  padding: 20px;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.88rem;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+}
+
+.prediction-loading {
+  display: grid;
+  gap: 14px;
+  padding: 8px 0 4px;
+}
+
+.skeleton-block,
+.skeleton-card {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.05) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.2s infinite;
+  border-radius: 12px;
+}
+
+.skeleton-block {
+  height: 88px;
+}
+
+.skeleton-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.skeleton-card {
+  height: 64px;
+}
+
+.loading-text {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  text-align: center;
+}
+
+.analytics-reveal {
+  animation: fadeUp 0.55s ease both;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+.page-empty-state {
+  padding: 28px;
+  text-align: center;
+  color: var(--muted);
+  border: 1px dashed var(--border);
+  border-radius: 14px;
+  margin-bottom: 16px;
+}
+
 .primary-btn {
   padding: 11px 22px;
   font-size: 0.9rem;
@@ -409,6 +534,12 @@ body {
   line-height: 1.55;
 }
 
+.empty-state-action {
+  display: inline-block;
+  margin-top: 16px;
+  text-decoration: none;
+}
+
 .empty-state-icon {
   display: none;
 }
@@ -499,39 +630,6 @@ body {
   font-size: 0.88rem;
 }
 
-.card-with-bg {
-  position: relative;
-  overflow: hidden;
-}
-
-.card-with-bg::after {
-  content: "";
-  position: absolute;
-  right: -20px;
-  bottom: -20px;
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  opacity: 0.12;
-  pointer-events: none;
-}
-
-.card-with-bg[data-visual="consumption"]::after {
-  background: var(--green);
-}
-
-.card-with-bg[data-visual="predict"]::after {
-  background: var(--blue);
-}
-
-.card-with-bg[data-visual="score"]::after {
-  background: var(--green);
-}
-
-.card-with-bg[data-visual="peak"]::after {
-  background: var(--amber);
-}
-
 .chart-panel {
   background: var(--panel);
 }
@@ -551,27 +649,38 @@ body {
 }
 
 #predictionSection {
-  margin-bottom: 16px;
+  margin-bottom: 0;
   padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 #predictionSection .panel-head {
   margin-bottom: 16px;
 }
 
-.insight-cards {
-  margin-top: 16px;
+#analyticsSection {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
 }
 
 #analyticsSection .grid {
-  margin-top: 16px;
+  margin-top: 0;
+}
+
+.insight-cards {
+  margin-top: 0;
 }
 
 .prediction-output {
-  padding: 12px;
+  margin-top: 0;
+  padding: 16px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: rgba(255, 255, 255, 0.05);
+  scroll-margin-top: 16px;
 }
 
 .result-head {
@@ -684,32 +793,38 @@ body {
   background: rgba(255, 255, 255, 0.03);
 }
 
-.week-row {
+.week-row,
+.scenario-row {
   cursor: pointer;
   transition: background 0.2s ease;
 }
 
-.week-row.active {
+.week-row.active,
+.scenario-row.active {
   background: rgba(110, 207, 143, 0.1);
 }
 
-.week-row.active td:first-child {
+.week-row.active td:first-child,
+.scenario-row.active td:first-child {
   color: #6ecf8f;
   font-weight: 600;
 }
 
-.week-chart-head {
+.week-chart-head,
+.scenario-chart-head {
   flex-wrap: wrap;
   gap: 12px;
 }
 
-.week-selector {
+.week-selector,
+.scenario-selector {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.week-tab {
+.week-tab,
+.scenario-tab {
   padding: 7px 14px;
   font-size: 0.8rem;
   font-weight: 600;
@@ -721,16 +836,22 @@ body {
   cursor: pointer;
 }
 
-.week-tab.active {
+.week-tab.active,
+.scenario-tab.active {
   color: #eaf1ff;
   background: rgba(110, 207, 143, 0.15);
   border-color: rgba(110, 207, 143, 0.35);
 }
 
-.week-charts-grid {
+.week-charts-grid,
+.scenario-charts-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
+}
+
+.scenario-description {
+  margin: 0 0 14px;
 }
 
 .chart-subtitle {
@@ -854,7 +975,8 @@ body {
     max-width: 280px;
   }
 
-  .week-charts-grid {
+  .week-charts-grid,
+  .scenario-charts-grid {
     grid-template-columns: 1fr;
   }
 

@@ -52,33 +52,9 @@
         </div>
         <div class="form-actions">
           <button type="submit" class="primary-btn" id="predictBtn">Predict</button>
+          <button type="button" class="secondary-btn" id="resetBtn">Reset</button>
         </div>
       </form>
-
-      <div id="predictionCard" class="prediction-output is-hidden">
-        <div class="result-head">
-          <h3>Prediction Result</h3>
-          <span class="result-tag">Live</span>
-        </div>
-        <div class="result-highlight">
-          <p>Predicted Energy Consumption</p>
-          <h2 id="predictionResult">-- kWh</h2>
-        </div>
-        <div class="result-grid">
-          <div class="result-item">
-            <p>Energy Risk Level</p>
-            <strong id="riskLevel">--</strong>
-          </div>
-          <div class="result-item">
-            <p>Estimated Cost</p>
-            <strong id="estimatedCost">₹ --</strong>
-          </div>
-          <div class="result-item">
-            <p>Efficiency Score</p>
-            <strong id="efficiencyScore">-- / 100</strong>
-          </div>
-        </div>
-      </div>
     </div>
 
     <aside class="prediction-visual">
@@ -93,6 +69,41 @@
         <li><i class="fa-solid fa-clock"></i> Device runtime hours</li>
       </ul>
     </aside>
+  </div>
+
+  <div id="predictionCard" class="prediction-output is-hidden">
+    <div class="result-head">
+      <h3>Prediction Result</h3>
+      <span class="result-tag">Live</span>
+    </div>
+    <div class="result-highlight">
+      <p>Predicted Energy Consumption</p>
+      <h2 id="predictionResult">-- kWh</h2>
+    </div>
+    <div class="result-grid">
+      <div class="result-item">
+        <p>Energy Risk Level</p>
+        <strong id="riskLevel">--</strong>
+      </div>
+      <div class="result-item">
+        <p>Estimated Cost</p>
+        <strong id="estimatedCost">₹ --</strong>
+      </div>
+      <div class="result-item">
+        <p>Sustainability Score</p>
+        <strong id="efficiencyScore">-- / 100</strong>
+      </div>
+    </div>
+  </div>
+
+  <div id="predictionLoading" class="prediction-loading is-hidden" aria-live="polite">
+    <div class="skeleton-block"></div>
+    <div class="skeleton-row">
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+      <div class="skeleton-card"></div>
+    </div>
+    <p class="loading-text">Running prediction model...</p>
   </div>
 </section>
 
@@ -111,7 +122,7 @@
   </div>
 
   <section class="cards">
-    <article class="card glass fade-up card-with-bg" data-visual="consumption">
+    <article class="card glass fade-up">
       <div class="card-icon green"><i class="fa-solid fa-battery-three-quarters"></i></div>
       <div>
         <p>Total Energy Consumption</p>
@@ -119,7 +130,7 @@
       </div>
     </article>
 
-    <article class="card glass fade-up card-with-bg" data-visual="predict">
+    <article class="card glass fade-up">
       <div class="card-icon blue"><i class="fa-solid fa-robot"></i></div>
       <div>
         <p>Predicted Next-day Consumption</p>
@@ -127,19 +138,25 @@
       </div>
     </article>
 
-    <article class="card glass fade-up card-with-bg" data-visual="score">
+    <article class="card glass fade-up">
       <div class="card-icon green"><i class="fa-solid fa-chart-area"></i></div>
       <div>
-        <p>Sustainability Score</p>
+        <p>
+          Sustainability Score
+          <button type="button" class="info-tip" id="sustainabilityTip" title="How is this score calculated?" aria-label="How is sustainability score calculated?">
+            <i class="fa-solid fa-circle-info"></i>
+          </button>
+        </p>
         <h3 id="efficiencyLabel">--%</h3>
       </div>
     </article>
 
-    <article class="card glass fade-up card-with-bg" data-visual="peak">
+    <article class="card glass fade-up">
       <div class="card-icon amber"><i class="fa-solid fa-clock"></i></div>
       <div>
         <p>Peak Usage Hours</p>
         <h3 id="peakUsageHours">--</h3>
+        <p class="card-subtext" id="peakUsageDetail">--</p>
       </div>
     </article>
   </section>
@@ -171,17 +188,20 @@
   <section class="grid">
     <article class="panel glass chart-panel">
       <div class="panel-head"><h2>Daily Energy Consumption</h2></div>
-      <canvas id="lineChart"></canvas>
+      <div id="lineChartEmpty" class="chart-empty">No data yet. Run a prediction to generate the daily trend.</div>
+      <canvas id="lineChart" class="is-hidden"></canvas>
     </article>
 
     <article class="panel glass chart-panel">
       <div class="panel-head"><h2>Device-wise Consumption</h2></div>
-      <canvas id="barChart"></canvas>
+      <div id="barChartEmpty" class="chart-empty">No data yet. Device breakdown appears after prediction.</div>
+      <canvas id="barChart" class="is-hidden"></canvas>
     </article>
 
     <article class="panel glass chart-panel">
       <div class="panel-head"><h2>Appliance Percentage Usage</h2></div>
-      <canvas id="pieChart"></canvas>
+      <div id="pieChartEmpty" class="chart-empty">No data yet. Appliance share is computed from your inputs.</div>
+      <canvas id="pieChart" class="is-hidden"></canvas>
     </article>
 
     <article class="panel glass">
@@ -192,7 +212,10 @@
       <div class="meter">
         <div id="meterFill" class="meter-fill" style="width: 0%;"></div>
       </div>
-      <p class="help">Higher score means better sustainability performance.</p>
+      <p class="help">
+        <span id="efficiencyRating" class="efficiency-rating">--</span>
+        — calculated as (Ideal / Actual) × 100
+      </p>
     </article>
 
     <article class="panel glass span-2 suggestions-panel">

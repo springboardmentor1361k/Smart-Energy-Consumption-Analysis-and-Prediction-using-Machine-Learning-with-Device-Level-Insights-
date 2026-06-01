@@ -1,48 +1,72 @@
 {% extends "base.html" %}
 
 {% block content %}
-<section class="cards">
-  <article class="card glass fade-up">
-    <div class="card-icon amber"><i class="fa-solid fa-fire"></i></div>
-    <div>
-      <p>Peak Day</p>
-      <h3>{{ insights_data.peak_day }} ({{ insights_data.peak_value }} kWh)</h3>
-    </div>
-  </article>
-  <article class="card glass fade-up">
-    <div class="card-icon green"><i class="fa-solid fa-leaf"></i></div>
-    <div>
-      <p>Lowest Day</p>
-      <h3>{{ insights_data.lowest_day }} ({{ insights_data.lowest_value }} kWh)</h3>
-    </div>
-  </article>
-  <article class="card glass fade-up">
-    <div class="card-icon blue"><i class="fa-solid fa-chart-simple"></i></div>
-    <div>
-      <p>Average Daily Usage</p>
-      <h3>{{ insights_data.average_daily }} kWh</h3>
-    </div>
-  </article>
+<section id="insightsEmpty" class="empty-state panel glass">
+  <img
+    src="{{ url_for('static', filename='images/energy-empty.svg') }}"
+    alt=""
+    class="empty-state-image"
+    aria-hidden="true"
+  />
+  <div class="empty-state-copy">
+    <h2>No insights available yet</h2>
+    <p>
+      Enter energy parameters on the Dashboard and click Predict to unlock daily trends,
+      hourly load patterns, and usage insights here.
+    </p>
+    <a href="{{ url_for('index') }}" class="primary-btn empty-state-action">Go to Dashboard</a>
+  </div>
 </section>
 
-<section class="grid">
-  <article class="panel glass">
-    <div class="panel-head"><h2>Daily Consumption Trend</h2></div>
-    <canvas id="lineChart"></canvas>
-  </article>
+<section id="insightsContent" class="is-hidden">
+  <section class="cards">
+    <article class="card glass fade-up">
+      <div class="card-icon amber"><i class="fa-solid fa-fire"></i></div>
+      <div>
+        <p>Peak Day</p>
+        <h3 id="insightPeakDayCard">--</h3>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon green"><i class="fa-solid fa-leaf"></i></div>
+      <div>
+        <p>Lowest Day</p>
+        <h3 id="insightLowDayCard">--</h3>
+      </div>
+    </article>
+    <article class="card glass fade-up">
+      <div class="card-icon blue"><i class="fa-solid fa-chart-simple"></i></div>
+      <div>
+        <p>Average Daily Usage</p>
+        <h3 id="insightAvgDailyCard">-- kWh</h3>
+      </div>
+    </article>
+  </section>
 
-  <article class="panel glass">
-    <div class="panel-head"><h2>Appliance Usage Distribution</h2></div>
-    <canvas id="pieChart"></canvas>
-  </article>
+  <section class="grid">
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Daily Consumption Trend</h2></div>
+      <div id="lineChartEmpty" class="chart-empty is-hidden">
+        Daily trend will appear here after you run a prediction.
+      </div>
+      <canvas id="lineChart"></canvas>
+    </article>
 
-  <article class="panel glass span-2">
-    <div class="panel-head"><h2>Insights</h2></div>
-    <ul class="recommendations">
-      {% for insight in insights_data.insights %}
-      <li>{{ insight }}</li>
-      {% endfor %}
-    </ul>
-  </article>
+    <article class="panel glass chart-panel">
+      <div class="panel-head"><h2>Hourly Load Pattern</h2></div>
+      <div id="hourlyChartEmpty" class="chart-empty is-hidden">
+        Hourly load pattern will appear here after you run a prediction.
+      </div>
+      <canvas id="hourlyChart"></canvas>
+    </article>
+
+    <article class="panel glass span-2">
+      <div class="panel-head"><h2>Insights</h2></div>
+      <ul id="insightsList" class="recommendations"></ul>
+      <p id="insightsListEmpty" class="chart-empty is-hidden">
+        Usage insights will be generated from your prediction results.
+      </p>
+    </article>
+  </section>
 </section>
 {% endblock %}
