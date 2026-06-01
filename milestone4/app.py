@@ -2,13 +2,15 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Any
+import importlib
 
 import joblib
 import numpy as np
 from flask import Flask, jsonify, render_template, request
 
 try:
-    from tensorflow.keras.models import load_model
+    keras_models = importlib.import_module("keras.models")
+    load_model = getattr(keras_models, "load_model", None)
 except Exception:  # pragma: no cover
     load_model = None
 
