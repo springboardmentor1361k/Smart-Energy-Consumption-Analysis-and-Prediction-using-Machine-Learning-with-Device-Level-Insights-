@@ -3,6 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any
 import importlib
+import os
+import threading
+import webbrowser
 
 import joblib
 import numpy as np
@@ -688,5 +691,11 @@ def predict():
     )
 
 
+def _open_browser() -> None:
+    webbrowser.open_new("http://127.0.0.1:5000")
+
+
 if __name__ == "__main__":
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
+        threading.Timer(1.0, _open_browser).start()
     app.run(debug=True)
