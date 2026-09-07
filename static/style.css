@@ -1,0 +1,60 @@
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+    color: white;
+}
+
+.header {
+    text-align: center;
+    padding: 30px;
+}
+
+.prediction-box {
+    text-align: center;
+    margin: 20px;
+}
+
+.prediction-box input {
+    padding: 8px;
+    margin: 5px;
+}
+
+.prediction-box button {
+    padding: 8px 15px;
+    background-color: #00e0ff;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+#predictionResult {
+    margin-top: 15px;
+    font-size: 18px;
+}
+
+.dashboard {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 40px 0;
+}
+
+.card {
+    background-color: rgba(255,255,255,0.1);
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    width: 200px;
+}
+
+.graphs {
+    width: 90%;
+    max-width: 900px;
+    margin: auto;
+}
+
+.graph-container {
+    height: 350px;
+    margin-bottom: 40px;
+}
